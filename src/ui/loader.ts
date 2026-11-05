@@ -1,8 +1,8 @@
 const SEEN = 'todo-project003:loaded';
-const MIN_MS = 600;
-const FADE_MS = 200;
+const MIN_MS = 1_650;
+const FADE_MS = 300;
 
-// The day pie fills once per visit, never longer than 0.9 s; a later load in the same visit, or Motion off, removes it at once.
+// Once per visit, long enough to enjoy (the spark lands at 1.6 s, then a 0.3 s fade); a later load in the visit, or Motion off, skips it.
 export function dismissLoader(motion: boolean, startedAt = performance.now()) {
   const loader = document.getElementById('loader');
   if (!loader) return;
