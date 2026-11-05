@@ -16,6 +16,8 @@ export default defineConfig({
     // The installed Google Chrome; GitHub's runners ship it too.
     channel: 'chrome',
     trace: 'retain-on-failure',
+    // This PC reports reduced motion and GitHub's runners do not; run every flow with motion, as CI does.
+    contextOptions: { reducedMotion: 'no-preference' },
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
