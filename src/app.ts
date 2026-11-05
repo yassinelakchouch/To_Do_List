@@ -13,7 +13,7 @@ import { settingsSheet, type Toggle } from './ui/components/settingsSheet';
 import { keysSheet } from './ui/components/keysSheet';
 import { commandMenu, filterCommands, type Command } from './ui/components/commandMenu';
 import { checkInCard, type CheckInProps } from './ui/components/checkInCard';
-import { rememberSkip, skippedDay } from './ui/checkInSkip';
+import { recall, remember } from './ui/remember';
 import { pickPrompt, slotActions, slotPicker, slotReel, type Reel } from './ui/components/slotPicker';
 import { pickTask, spinPath, tickDelay } from './core/pick';
 import { createSound, type Cue } from './ui/sound';
@@ -60,7 +60,7 @@ export function start(root: HTMLElement) {
   let rewardDraft: RewardDraft | null = null;
   let editing: string | null = null;
   let checkInDraft: { mood: Mood | null; blocker: string } = { mood: null, blocker: '' };
-  let skipped = skippedDay();
+  let skipped = recall('check-in-skipped');
   let pick: { id: string; landed: boolean } | null = null;
   let lastPick: string | null = null;
   let pickTimer = 0;
@@ -167,7 +167,7 @@ export function start(root: HTMLElement) {
 
   function skipCheckIn() {
     skipped = dayKey(Date.now());
-    rememberSkip(skipped);
+    remember('check-in-skipped', skipped);
     checkInDraft = { mood: null, blocker: '' };
     renderState();
     $<HTMLInputElement>('#composer')?.focus();
