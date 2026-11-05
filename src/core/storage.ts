@@ -3,7 +3,7 @@ import { FRESH, type AppState } from './store';
 export const KEY = 'todo-project003';
 export const VERSION = 1;
 
-export type LoadStatus = 'fresh' | 'loaded' | 'blocked' | 'unreadable';
+type LoadStatus = 'fresh' | 'loaded' | 'blocked' | 'unreadable';
 
 interface Saved {
   version: number;

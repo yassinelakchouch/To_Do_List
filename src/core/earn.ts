@@ -2,10 +2,10 @@ import type { Effort, Task } from './tasks';
 
 export const PAY: Record<Effort, number> = { 1: 10, 2: 20, 3: 30 };
 export const CHAIN_MS = 90_000;
-export const CHAIN_CAP = 3;
+const CHAIN_CAP = 3;
 export const CHECK_IN_XP = 15;
-export const GOAL_XP = 20;
-export const DEFAULT_GOAL = 5;
+const GOAL_XP = 20;
+const DEFAULT_GOAL = 5;
 
 export interface Day {
   done: number;
@@ -15,7 +15,7 @@ export interface Day {
 }
 
 // `earned` counts as both XP and sparks; quest tiers add XP only and redeeming spends sparks only (later modules).
-export interface Ledger {
+interface Ledger {
   earned: number;
   pay: Map<string, { amount: number; chain: number }>;
   days: Map<string, Day>;

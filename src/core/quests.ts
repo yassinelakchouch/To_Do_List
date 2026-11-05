@@ -2,7 +2,7 @@ import { dayKey } from './earn';
 import { weekKey, type WeekRule } from './weeks';
 import type { Task } from './tasks';
 
-export type Window = 'week' | 'month';
+type Window = 'week' | 'month';
 
 export const QUESTS = [
   { id: 'focus', name: 'Focus', about: 'finish big (L) tasks', window: 'month', tiers: [1, 3, 6, 10, 15] },
@@ -12,7 +12,7 @@ export const QUESTS = [
 ] as const satisfies readonly { id: string; name: string; about: string; window: Window; tiers: readonly number[] }[];
 
 export type QuestId = (typeof QUESTS)[number]['id'];
-export const TIER_XP = 25;
+const TIER_XP = 25;
 const EARLY_HOUR = 9;
 
 export interface QuestProgress {
@@ -25,7 +25,7 @@ export interface QuestProgress {
   window: string;
 }
 
-export interface QuestInput {
+interface QuestInput {
   tasks: Task[];
   checkInTimes: number[];
   weeks?: WeekRule[];

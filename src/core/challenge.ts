@@ -2,7 +2,7 @@ import { dayKey, ledger, type EarnInput } from './earn';
 import { windowKey } from './quests';
 import { weekEnd, type WeekRule } from './weeks';
 
-export const CHALLENGE_XP = 50;
+const CHALLENGE_XP = 50;
 const WEEK_MS = 7 * 86_400_000;
 
 interface WeekFacts {

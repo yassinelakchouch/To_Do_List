@@ -11,7 +11,7 @@ import { reduceTasks, type Task, type TaskAction } from './tasks';
 export type Mood = 'storm' | 'rain' | 'cloud' | 'sun';
 export type Goal = 3 | 5 | 8;
 
-export interface CheckIn {
+interface CheckIn {
   day: string;
   at: number;
   mood: Mood;

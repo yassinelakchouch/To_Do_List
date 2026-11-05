@@ -6,7 +6,7 @@ export const LEAGUES = [
   { name: 'Legend', from: 10_000 },
 ] as const;
 
-export type LeagueName = (typeof LEAGUES)[number]['name'];
+type LeagueName = (typeof LEAGUES)[number]['name'];
 
 export interface Standing {
   tier: number;
