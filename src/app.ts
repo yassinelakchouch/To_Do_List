@@ -12,6 +12,7 @@ import { sidebar } from './ui/components/sidebar';
 import { tabBar } from './ui/components/tabBar';
 import { groupHeading, taskRow } from './ui/components/taskRow';
 import { toast, TOAST_MS } from './ui/components/toast';
+import { dismissLoader } from './ui/loader';
 import { pageFromHash, PAGES, type Page } from './ui/pages';
 
 const newId = () => (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`);
@@ -243,5 +244,6 @@ export function start(root: HTMLElement) {
   });
 
   renderPage();
+  dismissLoader(store.state.settings.motion);
   if (loaded.status === 'blocked') showToast('This list lasts until the tab closes: this browser blocks saving');
 }
