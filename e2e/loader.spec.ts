@@ -8,6 +8,21 @@ test('the day pie shows on the first load of a visit, then gives way to the list
   await expect(page.getByRole('dialog')).toBeVisible();
 });
 
+test("the loader keeps board T-07's proportions and says what it is loading", async ({ page }) => {
+  await firstVisit(page);
+  const { width, height } = page.viewportSize()!;
+  const u = Math.min(width / 720, height / 420);
+  const drawn = await page.evaluate(() => ({
+    pie: document.querySelector('#loader svg')!.getBoundingClientRect().width,
+    title: parseFloat(getComputedStyle(document.querySelector('.loader-title')!).fontSize),
+    sub: parseFloat(getComputedStyle(document.querySelector('.loader-sub')!).fontSize),
+  }));
+  expect(drawn.pie).toBeCloseTo(Math.max(48, 64 * u), 0);
+  expect(drawn.title).toBeCloseTo(Math.max(24, 30 * u), 0);
+  expect(drawn.sub).toBeCloseTo(Math.max(12, 12 * u), 0);
+  await expect(page.locator('#loader')).toContainText('loading your list');
+});
+
 test('the loader leaves as its animation ends, even when the app starts late', async ({ page }) => {
   await page.route((url) => url.pathname === '/src/main.ts', async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 1_000));
