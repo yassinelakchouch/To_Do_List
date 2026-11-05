@@ -12,6 +12,10 @@ import { onboarding, STEPS, type OnboardingStep } from './ui/components/onboardi
 import { settingsSheet, type Toggle } from './ui/components/settingsSheet';
 import { keysSheet } from './ui/components/keysSheet';
 import { commandMenu, filterCommands, type Command } from './ui/components/commandMenu';
+import { checkInCard, type CheckInProps } from './ui/components/checkInCard';
+import { rememberSkip, skippedDay } from './ui/checkInSkip';
+import { CHECK_IN_XP } from './core/earn';
+import type { Mood } from './core/store';
 import { exportJson } from './core/storage';
 import { sidebar } from './ui/components/sidebar';
 import { tabBar } from './ui/components/tabBar';
@@ -47,6 +51,8 @@ export function start(root: HTMLElement) {
   let highlight: QuestId | null = null;
   let rewardDraft: RewardDraft | null = null;
   let editing: string | null = null;
+  let checkInDraft: { mood: Mood | null; blocker: string } = { mood: null, blocker: '' };
+  let skipped = skippedDay();
   let settingsOpen = false;
   let keysOpen = false;
   let menu: { query: string; active: number } | null = null;
@@ -87,11 +93,53 @@ export function start(root: HTMLElement) {
     const now = Date.now();
     const summary = summarize(store.state, now);
     const days = book().days;
-    return inspector({ summary, rewards: store.state.rewards, redeemed: store.state.redeemed, days, now, highlight });
+    return inspector({ summary, rewards: store.state.rewards, redeemed: store.state.redeemed, days, now, highlight, checkIn: checkInProps() });
+  }
+
+  // Due once a day on Today, after onboarding, unless it is switched off, done or skipped.
+  function checkInProps(): CheckInProps | null {
+    const now = Date.now();
+    const today = dayKey(now);
+    const { settings, checkIns, tasks } = store.state;
+    if (!settings.checkIn || onboard || skipped === today || checkIns.some((c) => c.day === today)) return null;
+    const before = new Date(now);
+    before.setHours(12, 0, 0, 0);
+    before.setDate(before.getDate() - 1);
+    const yesterday = dayKey(before.getTime());
+    return {
+      now,
+      ...checkInDraft,
+      yesterday: tasks.filter((t) => t.done && t.doneAt !== null && dayKey(t.doneAt) === yesterday).map((t) => t.text),
+      open: todayTasks(tasks, now).filter((t) => !t.done).map((t) => t.text),
+    };
+  }
+
+  function pickMood(mood: Mood) {
+    checkInDraft = { ...checkInDraft, mood };
+    renderState();
+    [...root.querySelectorAll<HTMLElement>(`[data-check-mood="${mood}"]`)].find((b) => b.offsetParent)?.focus();
+  }
+
+  function checkInReady() {
+    if (!checkInDraft.mood) return;
+    if (apply({ type: 'check-in', at: Date.now(), mood: checkInDraft.mood, blocker: checkInDraft.blocker })) showToast(`Checked in · +${CHECK_IN_XP} XP`, true);
+    checkInDraft = { mood: null, blocker: '' };
+    $<HTMLInputElement>('#composer')?.focus();
+  }
+
+  function skipCheckIn() {
+    skipped = dayKey(Date.now());
+    rememberSkip(skipped);
+    checkInDraft = { mood: null, blocker: '' };
+    renderState();
+    $<HTMLInputElement>('#composer')?.focus();
   }
 
   // Below 1100 px the inspector folds away; the week's challenge stays under the list (board T-05 E).
-  const challengeBelow = () => `<div id="challenge-below" class="px-4 py-4 min-[1100px]:hidden">${challengeCard(summarize(store.state, Date.now()).challenge)}</div>`;
+  const challengeBelow = () => {
+    const due = checkInProps();
+    return `<div id="challenge-below" class="grid gap-3 px-4 py-4 min-[1100px]:hidden">${due ? checkInCard(due) : ''}${challengeCard(summarize(store.state, Date.now()).challenge)}</div>`;
+  };
 
   function pageBody(): string {
     if (page === 'upcoming') return upcomingPage({ tasks: store.state.tasks, now: Date.now(), selected, effort, editing });
@@ -414,6 +462,17 @@ export function start(root: HTMLElement) {
 
   root.addEventListener('keydown', (event) => {
     const field = event.target as HTMLInputElement;
+    if (field.matches('[data-checkin-blocker]')) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        checkInReady();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        skipCheckIn();
+      }
+      return;
+    }
     if (field.matches('[data-edit-input]')) {
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -441,6 +500,10 @@ export function start(root: HTMLElement) {
 
   root.addEventListener('input', (event) => {
     const field = event.target as HTMLInputElement;
+    if (field.matches('[data-checkin-blocker]')) {
+      checkInDraft = { ...checkInDraft, blocker: field.value };
+      return;
+    }
     if (field.matches('[data-command-input]') && menu) {
       menu = { query: field.value, active: 0 };
       return renderMenu();
@@ -519,6 +582,10 @@ export function start(root: HTMLElement) {
     }
     const redeem = target.closest<HTMLElement>('[data-redeem]');
     if (redeem) return redeemReward(redeem.dataset.redeem!);
+    const mood = target.closest<HTMLElement>('[data-check-mood]');
+    if (mood) return pickMood(mood.dataset.checkMood as Mood);
+    if (target.closest('[data-checkin-ready]')) return checkInReady();
+    if (target.closest('[data-checkin-skip]')) return skipCheckIn();
     if (target.closest('[data-edit-input]')) return;
     const row = target.closest<HTMLElement>('.task-row');
     if (!row) return;
@@ -604,6 +671,7 @@ export function start(root: HTMLElement) {
       m: () => page === 'upcoming' && selected && moveTo(selected, dayKey(Date.now()), 'Today'),
       Delete: () => selected && remove(selected),
       Escape: () => {
+        if (!selected && checkInProps()) return skipCheckIn();
         selected = null;
         renderState();
       },
