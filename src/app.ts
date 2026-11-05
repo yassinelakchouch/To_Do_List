@@ -17,7 +17,8 @@ import { recall, remember } from './ui/remember';
 import { pickPrompt, slotActions, slotPicker, slotReel, type Reel } from './ui/components/slotPicker';
 import { pickTask, spinPath, tickDelay } from './core/pick';
 import { createSound, type Cue } from './ui/sound';
-import { canMove, createCounter, drawStrokes, dropStamp, flySpark, pulse, slideIn } from './ui/motion';
+import { canMove, createCounter, drawStrokes, dropStamp, flySpark, morphAthlete, pulse, slideIn } from './ui/motion';
+import { pose, trackPose } from './ui/parts/career';
 import { gsap } from 'gsap';
 import { newBestPlace } from './core/bestDays';
 import { changeWeekStart, type WeekStart } from './core/weeks';
@@ -255,7 +256,23 @@ export function start(root: HTMLElement) {
     headerHtml = header(label(), summary, chainNow(Date.now()));
     root.innerHTML = `<div class="flex min-h-dvh">${sidebar(page, summary, store.state.settings.name)}<div class="flex min-w-0 flex-1 flex-col"><div id="header">${headerHtml}</div><main class="flex-1 pb-28 lg:pb-6">${pageBody()}</main></div></div>${tabBar(page)}<div id="toast-slot" class="pointer-events-none fixed inset-x-0 bottom-24 flex justify-center px-4 lg:bottom-8 [&>*]:pointer-events-auto"></div>${onboard ? onboarding(onboard.step, onboard.name, onboard.goal) : ''}${settingsOpen ? settingsSheet(store.state.settings, resetTyped) : ''}`;
     counter.sync(summary, moving());
+    if (page === 'career') arriveOnCareer(summary);
     if (onboard) focusOnboarding();
+  }
+
+  // The first time Career opens after a league up, the athlete changes pose and the reached crest draws in (board T-05).
+  function arriveOnCareer(summary: Summary) {
+    const seen = Number(recall('career-league') ?? 0);
+    const tier = summary.standing.tier;
+    remember('career-league', String(tier));
+    if (!seen || seen >= tier || !moving()) return;
+    const before = Math.min(seen, 3);
+    for (const svg of root.querySelectorAll<SVGSVGElement>('.career-track')) {
+      const figure = svg.querySelector<SVGSVGElement>('.athlete');
+      if (figure && before !== trackPose(summary.xp)) morphAthlete(figure, pose(before));
+      const reached = svg.querySelector<SVGSVGElement>(`.crest[data-tier="${tier}"]`);
+      if (reached) drawStrokes([...reached.querySelectorAll<SVGGeometryElement>('path')], 0.6);
+    }
   }
 
   // Settings change the app, never the undo history; the sheet redraws in place and keeps the focus where it was.
