@@ -23,3 +23,7 @@ export function slotPicker(rows: Reel, landed: boolean): string {
     </section>
   </div>`;
 }
+
+// The way in when you can't choose (board T-04 inspector foot): on Today's panel and under the list on a phone.
+export const pickPrompt = () =>
+  `<div class="flex items-center justify-between"><span class="font-mono text-[11px] text-muted">Can’t choose?</span><button type="button" class="inline-flex h-7 items-center gap-1.5 rounded-full border border-line px-3 font-mono text-xs text-cream hover:border-outline" data-pick-open aria-keyshortcuts="P">Pick for me <kbd class="hidden rounded border border-line px-1 text-[10px] text-muted sm:inline">P</kbd></button></div>`;
