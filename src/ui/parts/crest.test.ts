@@ -23,4 +23,10 @@ describe('crest', () => {
   it('is decoration, named by the league text beside it', () => {
     expect(crest(2)).toContain('aria-hidden="true"');
   });
+
+  it('dims the marks of a league still ahead', () => {
+    expect(crest(3, 20, 'var(--color-dim)')).not.toContain('var(--color-accent)"');
+    expect(crest(5, 20, 'var(--color-dim)')).not.toMatch(/accent|255 90 44/);
+    expect(crest(3)).toContain('stroke="var(--color-accent)"');
+  });
 });
