@@ -1,4 +1,8 @@
 import { gsap } from 'gsap';
+import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin';
+import type { Pose } from './parts/career';
+
+gsap.registerPlugin(MorphSVGPlugin);
 
 export const canMove = (setting: boolean) => setting && !matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -69,5 +73,23 @@ export function drawStrokes(shapes: SVGGeometryElement[], duration = 0.5) {
     const length = shape.getTotalLength();
     gsap.fromTo(shape, { strokeDasharray: length, strokeDashoffset: length }, { strokeDashoffset: 0, duration, delay: i * 0.08, ease: 'power2.out', clearProps: 'strokeDasharray,strokeDashoffset' });
   });
+}
+
+// League up (board T-05): the limbs morph from the pose you last saw into the new one, the head follows, the extras fade in.
+export function morphAthlete(svg: SVGSVGElement, from: Pose) {
+  const limbs = svg.querySelector<SVGPathElement>('.limbs');
+  const head = svg.querySelector<SVGCircleElement>('.head');
+  if (!limbs || !head) return;
+  const to = limbs.getAttribute('d')!;
+  const [cx, cy] = [head.getAttribute('cx')!, head.getAttribute('cy')!];
+  limbs.setAttribute('d', from.limbs);
+  head.setAttribute('cx', String(from.head[0]));
+  head.setAttribute('cy', String(from.head[1]));
+  const extra = svg.querySelector('.extra');
+  if (extra) gsap.set(extra, { opacity: 0 });
+  // MorphSVG leaves its own cubic path data behind; the drawn pose's own data goes back at the end.
+  const timeline = gsap.timeline({ delay: 0.25, onComplete: () => limbs.setAttribute('d', to) });
+  timeline.to(limbs, { morphSVG: to, duration: 0.9, ease: 'power3.inOut' }, 0).to(head, { attr: { cx, cy }, duration: 0.9, ease: 'power3.inOut' }, 0);
+  if (extra) timeline.to(extra, { opacity: 1, duration: 0.3 }, 0.7);
 }
 
