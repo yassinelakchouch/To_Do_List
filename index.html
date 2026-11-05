@@ -24,6 +24,8 @@
       @keyframes loader-ring { from { transform: rotate(-120deg) scale(0.85); opacity: 0; } to { transform: none; opacity: 1; } }
       @keyframes loader-spark { from { opacity: 0; transform: scale(0.2) rotate(-45deg); } to { opacity: 1; transform: none; } }
       @keyframes loader-rise { to { opacity: 1; transform: none; } }
+      /* Motion off in the system: never painted, and the app removes it as it starts. */
+      @media (prefers-reduced-motion: reduce) { .loader { display: none; } }
     </style>
     <script type="module" src="/src/main.ts"></script>
   </head>
