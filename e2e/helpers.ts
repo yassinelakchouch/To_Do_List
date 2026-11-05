@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
-import { FRESH } from '../src/core/store';
+import { FRESH, type AppState } from '../src/core/store';
 import { KEY, VERSION } from '../src/core/storage';
 
-// A returning visitor: onboarding already done, an empty list, the loader already seen this visit.
-export async function returning(page: Page, name = '') {
+// A returning visitor: onboarding already done, an empty list unless `state` says otherwise, the loader already seen this visit.
+export async function returning(page: Page, name = '', state: Partial<AppState> = {}) {
   await page.goto('/');
   await page.evaluate(
     ({ key, saved }) => {
@@ -11,7 +11,7 @@ export async function returning(page: Page, name = '') {
       localStorage.setItem(key, saved);
       sessionStorage.setItem('todo-project003:loaded', '1');
     },
-    { key: KEY, saved: JSON.stringify({ version: VERSION, state: { ...FRESH, settings: { ...FRESH.settings, name, onboarded: true } } }) },
+    { key: KEY, saved: JSON.stringify({ version: VERSION, state: { ...FRESH, ...state, settings: { ...FRESH.settings, name, onboarded: true } } }) },
   );
   await page.reload();
 }
