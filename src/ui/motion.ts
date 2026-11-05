@@ -62,3 +62,12 @@ export const dropStamp = (el: Element | null) => el && gsap.from(el, { scale: 1.
 
 // The ×2 chip slides out of the spark pill (board T-05 "Chain").
 export const slideIn = (el: Element | null) => el && gsap.from(el, { x: -6, opacity: 0, duration: 0.3, ease: 'power2.out' });
+
+// Strokes draw from their start, so a clockwise arc closes clockwise: a quest's new fifth (0.5 s), a new crest.
+export function drawStrokes(shapes: SVGGeometryElement[], duration = 0.5) {
+  shapes.forEach((shape, i) => {
+    const length = shape.getTotalLength();
+    gsap.fromTo(shape, { strokeDasharray: length, strokeDashoffset: length }, { strokeDashoffset: 0, duration, delay: i * 0.08, ease: 'power2.out', clearProps: 'strokeDasharray,strokeDashoffset' });
+  });
+}
+
