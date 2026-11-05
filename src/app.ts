@@ -17,7 +17,7 @@ import { rememberSkip, skippedDay } from './ui/checkInSkip';
 import { pickPrompt, slotActions, slotPicker, slotReel, type Reel } from './ui/components/slotPicker';
 import { pickTask, spinPath, tickDelay } from './core/pick';
 import { createSound, type Cue } from './ui/sound';
-import { canMove, createCounter, dropStamp, flySpark, pulse, slideIn } from './ui/motion';
+import { canMove, createCounter, drawStrokes, dropStamp, flySpark, pulse, slideIn } from './ui/motion';
 import { num } from './ui/html';
 import { CHECK_IN_XP } from './core/earn';
 import { exportJson } from './core/storage';
@@ -434,17 +434,30 @@ export function start(root: HTMLElement) {
     highlight = is.quests.find((q, i) => q.count > was.quests[i].count)?.id ?? null;
     if (task.done) return showToast(`Not done · ${task.text}`, true);
     sound.play(tickCue(was, is));
+    const crossed = is.quests.find((q, i) => q.tier > was.quests[i].tier);
     justDone = { id, gain: ledger({ tasks: store.state.tasks, checkIns: [] }).pay.get(id)?.amount ?? 0 };
     renderState();
     const from = $(`.task-row[data-id="${id}"] .gain`) ?? $(`.task-row[data-id="${id}"] .toggle`);
     const pill = $('.sparks');
     if (moving() && justDone.gain && from && pill) flySpark(`+${justDone.gain}`, from, pill, () => pulse($('.sparks')));
+    if (moving()) celebrate(crossed?.id ?? null, is.standing.tier > was.standing.tier);
     showToast(`Done · ${task.text}`, true);
     window.setTimeout(() => {
       if (justDone?.id !== id) return;
       justDone = null;
       if (page === 'today') renderState();
     }, JUST_DONE_MS);
+  }
+
+  // A quest's new fifth draws clockwise; a new league draws its crest and the league pill pulses (board T-05).
+  function celebrate(quest: string | null, leagueUp: boolean) {
+    const fifth = quest ? [...root.querySelectorAll<SVGPathElement>(`[data-quest="${quest}"] .fifth[data-on="true"]`)].at(-1) : undefined;
+    if (fifth) drawStrokes([fifth]);
+    const crest = root.querySelector<SVGSVGElement>('#header .crest');
+    if (leagueUp && crest) {
+      drawStrokes([...crest.querySelectorAll<SVGGeometryElement>('path, polyline, polygon, circle')], 0.6);
+      pulse(crest.closest('span')?.parentElement ?? null);
+    }
   }
 
   // The biggest thing a tick did picks the sound: a league, a quest tier, a chain, or a plain tick.
