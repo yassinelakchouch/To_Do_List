@@ -6,7 +6,7 @@ gsap.registerPlugin(MorphSVGPlugin);
 
 export const canMove = (setting: boolean) => setting && !matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export interface Counts {
+interface Counts {
   xp: number;
   sparks: number;
 }
