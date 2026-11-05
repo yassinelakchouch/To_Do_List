@@ -35,4 +35,12 @@ describe('inspector', () => {
     const due = inspector({ summary: summarize(FRESH, NOW), rewards: [], redeemed: [], days: new Map(), now: NOW, checkIn: { now: NOW, mood: null, yesterday: [], open: [] } });
     expect(due.indexOf('Morning check-in')).toBeLessThan(due.indexOf('This week'));
   });
+
+  it('leaves quests and rewards out while the check-in is due, and brings them back after', () => {
+    const due = inspector({ summary: summarize(FRESH, NOW), rewards: [], redeemed: [], days: new Map(), now: NOW, checkIn: { now: NOW, mood: null, yesterday: [], open: [] } });
+    expect(due).not.toContain('>Quests<');
+    expect(due).not.toContain('Rewards you set');
+    expect(due).toContain('This week’s challenge');
+    expect(inspector({ summary: summarize(FRESH, NOW), rewards: [], redeemed: [], days: new Map(), now: NOW })).toContain('>Quests<');
+  });
 });

@@ -31,6 +31,17 @@ test('Esc skips it until tomorrow', async ({ page, isMobile }) => {
   await expect(page.getByRole('region', { name: 'Morning check-in' })).toHaveCount(0);
 });
 
+test('while it is due, the right panel still fits the window; quests come back after', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the right panel is a desktop column');
+  const panel = page.getByRole('complementary', { name: 'Your progress' });
+  const viewport = page.viewportSize()!;
+  expect(await panel.evaluate((el) => el.scrollHeight)).toBeLessThanOrEqual(viewport.height - 48);
+  await expect(panel.getByRole('button', { name: /Pick for me/ })).toBeInViewport();
+  await expect(panel.getByText('Quests', { exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(panel.getByText('Quests', { exact: true })).toBeVisible();
+});
+
 test('switched off in Settings, it does not show', async ({ page }) => {
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('group', { name: 'Morning check-in' }).getByRole('button', { name: 'Off' }).click();
