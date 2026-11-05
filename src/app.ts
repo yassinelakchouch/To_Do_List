@@ -17,6 +17,8 @@ import { rememberSkip, skippedDay } from './ui/checkInSkip';
 import { pickPrompt, slotActions, slotPicker, slotReel, type Reel } from './ui/components/slotPicker';
 import { pickTask, spinPath, tickDelay } from './core/pick';
 import { createSound, type Cue } from './ui/sound';
+import { canMove, createCounter, dropStamp, flySpark, pulse, slideIn } from './ui/motion';
+import { num } from './ui/html';
 import { CHECK_IN_XP } from './core/earn';
 import { exportJson } from './core/storage';
 import { sidebar } from './ui/components/sidebar';
@@ -59,6 +61,10 @@ export function start(root: HTMLElement) {
   let lastPick: string | null = null;
   let pickTimer = 0;
   const sound = createSound(() => store.state.settings.sound);
+  const counter = createCounter(num);
+  const moving = () => canMove(store.state.settings.motion);
+  let headerHtml = '';
+  let flightNext = false;
   let settingsOpen = false;
   let keysOpen = false;
   let menu: { query: string; active: number } | null = null;
@@ -220,7 +226,9 @@ export function start(root: HTMLElement) {
   function renderPage() {
     stopPick();
     const summary = summarize(store.state, Date.now());
-    root.innerHTML = `<div class="flex min-h-dvh">${sidebar(page, summary, store.state.settings.name)}<div class="flex min-w-0 flex-1 flex-col"><div id="header">${header(label(), summary, chainNow(Date.now()))}</div><main class="flex-1 pb-28 lg:pb-6">${pageBody()}</main></div></div>${tabBar(page)}<div id="toast-slot" class="pointer-events-none fixed inset-x-0 bottom-24 flex justify-center px-4 lg:bottom-8 [&>*]:pointer-events-auto"></div>${onboard ? onboarding(onboard.step, onboard.name, onboard.goal) : ''}${settingsOpen ? settingsSheet(store.state.settings, resetTyped) : ''}`;
+    headerHtml = header(label(), summary, chainNow(Date.now()));
+    root.innerHTML = `<div class="flex min-h-dvh">${sidebar(page, summary, store.state.settings.name)}<div class="flex min-w-0 flex-1 flex-col"><div id="header">${headerHtml}</div><main class="flex-1 pb-28 lg:pb-6">${pageBody()}</main></div></div>${tabBar(page)}<div id="toast-slot" class="pointer-events-none fixed inset-x-0 bottom-24 flex justify-center px-4 lg:bottom-8 [&>*]:pointer-events-auto"></div>${onboard ? onboarding(onboard.step, onboard.name, onboard.goal) : ''}${settingsOpen ? settingsSheet(store.state.settings, resetTyped) : ''}`;
+    counter.sync(summary, moving());
     if (onboard) focusOnboarding();
   }
 
@@ -357,7 +365,16 @@ export function start(root: HTMLElement) {
   function renderState() {
     if (page !== 'today') return renderPage();
     const summary = summarize(store.state, Date.now());
-    $('#header')!.innerHTML = header(label(), summary, chainNow(Date.now()));
+    // Only a changed header is redrawn: a tick renders twice, and a second redraw would cut the roll short.
+    const head = header(label(), summary, chainNow(Date.now()));
+    if (head !== headerHtml) {
+      const chainBefore = headerHtml.includes('class="chain');
+      $('#header')!.innerHTML = head;
+      headerHtml = head;
+      if (moving() && !chainBefore && head.includes('class="chain')) slideIn($('.chain'));
+    }
+    counter.sync(summary, moving(), flightNext ? 0.55 : 0);
+    flightNext = false;
     $('#list')!.innerHTML = list();
     const aside = $('.inspector');
     if (aside) aside.outerHTML = side();
@@ -411,6 +428,7 @@ export function start(root: HTMLElement) {
   function toggle(id: string) {
     const task = store.state.tasks.find((t) => t.id === id);
     const was = summarize(store.state, Date.now());
+    flightNext = !task?.done && moving();
     if (!task || !apply({ type: 'task', action: { type: 'toggle', id, at: Date.now() } })) return;
     const is = summarize(store.state, Date.now());
     highlight = is.quests.find((q, i) => q.count > was.quests[i].count)?.id ?? null;
@@ -418,6 +436,9 @@ export function start(root: HTMLElement) {
     sound.play(tickCue(was, is));
     justDone = { id, gain: ledger({ tasks: store.state.tasks, checkIns: [] }).pay.get(id)?.amount ?? 0 };
     renderState();
+    const from = $(`.task-row[data-id="${id}"] .gain`) ?? $(`.task-row[data-id="${id}"] .toggle`);
+    const pill = $('.sparks');
+    if (moving() && justDone.gain && from && pill) flySpark(`+${justDone.gain}`, from, pill, () => pulse($('.sparks')));
     showToast(`Done · ${task.text}`, true);
     window.setTimeout(() => {
       if (justDone?.id !== id) return;
@@ -447,6 +468,7 @@ export function start(root: HTMLElement) {
     const reward = store.state.rewards.find((r) => r.id === rewardId);
     if (reward && apply({ type: 'reward', action: { type: 'redeem', id: newId(), rewardId, at: Date.now(), sparks: 0 } })) {
       sound.play('thud');
+      if (moving()) dropStamp($(`[data-reward="${rewardId}"] .stamp`));
       showToast(`${reward.name} · enjoy it`, true);
     }
   }
