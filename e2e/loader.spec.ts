@@ -8,6 +8,18 @@ test('the day pie shows on the first load of a visit, then gives way to the list
   await expect(page.getByRole('dialog')).toBeVisible();
 });
 
+test('with motion off in the system the loader never shows', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await firstVisit(page);
+  const painted = await page.evaluate(() => {
+    const loader = document.getElementById('loader');
+    return !!loader && getComputedStyle(loader).display !== 'none';
+  });
+  expect(painted).toBe(false);
+  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 500 });
+  await expect(page.getByRole('dialog')).toBeVisible();
+});
+
 test('a later load in the same visit skips it', async ({ page }) => {
   await firstVisit(page);
   await expect(page.locator('#loader')).toHaveCount(0, { timeout: 3_500 });

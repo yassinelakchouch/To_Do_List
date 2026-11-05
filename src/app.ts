@@ -874,6 +874,6 @@ export function start(root: HTMLElement) {
   });
 
   renderPage();
-  dismissLoader(store.state.settings.motion);
+  dismissLoader(canMove(store.state.settings.motion));
   if (loaded.status === 'blocked') showToast('This list lasts until the tab closes: this browser blocks saving');
 }
