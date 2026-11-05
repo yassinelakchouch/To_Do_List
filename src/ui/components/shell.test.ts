@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { FRESH, summarize } from '../core/store';
-import { esc } from './html';
-import { header, pageFromHash, sidebar, tabBar } from './shell';
+import { FRESH, summarize } from '../../core/store';
+import { header } from './header';
+import { sidebar } from './sidebar';
+import { tabBar } from './tabBar';
+import { esc } from '../html';
+import { pageFromHash } from '../pages';
 
 const summary = summarize(FRESH, new Date(2026, 10, 5, 10).getTime());
 
