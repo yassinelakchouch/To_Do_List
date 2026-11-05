@@ -8,6 +8,19 @@ test('the day pie shows on the first load of a visit, then gives way to the list
   await expect(page.getByRole('dialog')).toBeVisible();
 });
 
+test('the loader leaves as its animation ends, even when the app starts late', async ({ page }) => {
+  await page.route((url) => url.pathname === '/src/main.ts', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    await route.continue();
+  });
+  await firstVisit(page);
+  await page.waitForFunction(() => {
+    const loader = document.getElementById('loader');
+    return !loader || loader.getAnimations({ subtree: true }).every((animation) => animation.playState === 'finished');
+  });
+  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 500 });
+});
+
 test('with motion off in the system the loader never shows', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await firstVisit(page);
