@@ -15,11 +15,6 @@ export function bestDays(input: EarnInput, now: number, places = 3): BestDay[] {
     .slice(0, places);
 }
 
-// Today climbs onto the podium when it beats the day in third place, or fills an empty place.
-export function isOnPodium(input: EarnInput, now: number): boolean {
-  return bestDays(input, now).some((best) => best.day === dayKey(now));
-}
-
 // A new best day (use case 8): today's place on the podium, 1 to 3, when it moved ahead of a day that was ahead of it.
 export function newBestPlace(was: BestDay[], is: BestDay[], today: string): number | null {
   const place = is.findIndex((d) => d.day === today);

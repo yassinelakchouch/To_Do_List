@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestDays, isOnPodium, newBestPlace } from './bestDays';
+import { bestDays, newBestPlace } from './bestDays';
 import type { Effort, Task } from './tasks';
 
 const at = (date: number, hour = 10, month = 10) => new Date(2026, month, date, hour).getTime();
@@ -28,12 +28,6 @@ describe('best days', () => {
   it('shows fewer places when fewer days earned anything', () => {
     expect(bestDays({ tasks: [done('a', 1, at(1))], checkIns: [] }, NOW)).toHaveLength(1);
     expect(bestDays({ tasks: [], checkIns: [] }, NOW)).toEqual([]);
-  });
-
-  it('says when today is on the podium', () => {
-    const before = [done('a', 3, at(1)), done('b', 3, at(2)), done('c', 3, at(3))];
-    expect(isOnPodium({ tasks: [...before, done('t', 1, at(5))], checkIns: [] }, NOW)).toBe(false);
-    expect(isOnPodium({ tasks: [...before, done('t', 3, at(5)), done('u', 1, at(5, 16))], checkIns: [] }, NOW)).toBe(true);
   });
 
   it('names a new best day only when today moves ahead of another day', () => {
