@@ -33,6 +33,8 @@ describe('shell', () => {
     expect(plain).not.toContain('class="chain');
     expect(header('Today', summary, 2)).toContain('×2');
     expect(plain).toContain('data-open-settings aria-label="Settings"');
+    expect(plain).toContain('data-count="xp"');
+    expect(plain).toContain('data-count="sparks"');
   });
 
   it('reads the page from the address, Today by default', () => {

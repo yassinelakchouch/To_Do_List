@@ -13,8 +13,8 @@ export function header(title: string, summary: Summary, chain = 1): string {
     <span class="flex items-center gap-2 text-cream">${dayPie(today.done, today.goal)}<span class="font-mono text-xs">${today.done}/${today.goal} today</span></span>
     <span class="flex-1"></span>
     <span class="hidden items-center gap-2 rounded-full border border-line py-1 pr-2.5 pl-1.5 text-[12.5px] sm:flex"><span class="text-cream">${crest(standing.tier, 18)}</span>${standing.name}</span>
-    <span class="hidden items-center gap-1.5 rounded-full border border-line px-2.5 py-1 font-mono text-[12.5px] sm:flex"><span class="text-[11px] text-muted">XP</span>${num(summary.xp)}</span>
-    <span class="sparks flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 font-mono text-[13px]" aria-label="${num(summary.sparks)} sparks">${spark(14)}<span>${num(summary.sparks)}</span>${chip}</span>
+    <span class="hidden items-center gap-1.5 rounded-full border border-line px-2.5 py-1 font-mono text-[12.5px] sm:flex"><span class="text-[11px] text-muted">XP</span><span data-count="xp">${num(summary.xp)}</span></span>
+    <span class="sparks flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 font-mono text-[13px]" aria-label="${num(summary.sparks)} sparks">${spark(14)}<span data-count="sparks">${num(summary.sparks)}</span>${chip}</span>
     <button type="button" class="grid size-9 place-items-center rounded-full text-muted hover:bg-surface hover:text-cream" data-open-settings aria-label="Settings">${icon('gear', 18)}</button>
   </header>`;
 }
