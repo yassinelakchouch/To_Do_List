@@ -8,7 +8,7 @@ import { emptyState } from './ui/components/emptyState';
 import { challengeCard } from './ui/components/challengeCard';
 import { header } from './ui/components/header';
 import { inspector } from './ui/components/inspector';
-import { onboarding, type OnboardingStep } from './ui/components/onboarding';
+import { onboarding, STEPS, type OnboardingStep } from './ui/components/onboarding';
 import { sidebar } from './ui/components/sidebar';
 import { tabBar } from './ui/components/tabBar';
 import { groupHeading, taskRow } from './ui/components/taskRow';
@@ -142,7 +142,7 @@ export function start(root: HTMLElement) {
     if (!onboard) return;
     const field = $<HTMLInputElement>('#onboard-name');
     if (field) onboard.name = field.value;
-    if (action === 'next' && onboard.step < 3) onboard.step = (onboard.step + 1) as OnboardingStep;
+    if (action === 'next' && onboard.step < STEPS) onboard.step = (onboard.step + 1) as OnboardingStep;
     else if (action === 'back' && onboard.step > 1) onboard.step = (onboard.step - 1) as OnboardingStep;
     else if (action === 'skip' || action === 'empty' || action === 'samples') return finishOnboarding(action);
     renderOnboarding();
@@ -371,7 +371,7 @@ export function start(root: HTMLElement) {
         finishOnboarding('skip');
       } else if (event.key === 'Enter' && !(event.target instanceof HTMLButtonElement)) {
         event.preventDefault();
-        onboardAction(onboard.step === 3 ? 'samples' : 'next');
+        onboardAction(onboard.step === STEPS ? 'samples' : 'next');
       }
       return;
     }
