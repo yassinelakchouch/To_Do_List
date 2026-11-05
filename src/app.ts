@@ -17,6 +17,8 @@ import { dismissLoader } from './ui/loader';
 import { careerPage } from './ui/pages/careerPage';
 import { donePage } from './ui/pages/donePage';
 import { rewardsPage } from './ui/pages/rewardsPage';
+import { nextDays, upcomingPage, upcomingTasks } from './ui/pages/upcomingPage';
+import type { Label } from './core/tasks';
 import type { RewardDraft } from './ui/components/rewardEditor';
 import { COST } from './core/rewards';
 import { pageFromHash, PAGES, type Page } from './ui/pages';
@@ -83,6 +85,7 @@ export function start(root: HTMLElement) {
   const challengeBelow = () => `<div id="challenge-below" class="px-4 py-4 min-[1100px]:hidden">${challengeCard(summarize(store.state, Date.now()).challenge)}</div>`;
 
   function pageBody(): string {
+    if (page === 'upcoming') return upcomingPage({ tasks: store.state.tasks, now: Date.now(), selected, effort });
     if (page === 'done') {
       const now = Date.now();
       const { pay, days } = book();
@@ -182,7 +185,8 @@ export function start(root: HTMLElement) {
 
   function add(field: HTMLInputElement) {
     const id = newId();
-    if (!apply({ type: 'task', action: { type: 'add', id, text: field.value, day: dayKey(Date.now()), effort } })) {
+    const day = page === 'upcoming' ? nextDays(Date.now(), 1)[0] : dayKey(Date.now());
+    if (!apply({ type: 'task', action: { type: 'add', id, text: field.value, day, effort } })) {
       redrawComposer('empty');
       $('[data-composer] label')?.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-3px)' }, { transform: 'translateX(3px)' }, { transform: 'translateX(0)' }], { duration: 180, iterations: 2 });
       return;
@@ -195,6 +199,8 @@ export function start(root: HTMLElement) {
       redrawComposer();
     }
     renderState();
+    // Other pages redraw whole, so the new field takes the focus back for the next task.
+    if (page !== 'today') $<HTMLInputElement>('#composer')?.focus();
   }
 
   function toggle(id: string) {
@@ -215,7 +221,7 @@ export function start(root: HTMLElement) {
   }
 
   function remove(id: string) {
-    const tasks = todayTasks(store.state.tasks, Date.now());
+    const tasks = listed();
     const index = tasks.findIndex((t) => t.id === id);
     const task = tasks[index];
     if (!task || !apply({ type: 'task', action: { type: 'remove', id } })) return;
@@ -251,12 +257,29 @@ export function start(root: HTMLElement) {
     else openEditor({ id, name, cost, icon });
   }
 
+  function moveTo(id: string, day: string, label: string) {
+    const task = store.state.tasks.find((t) => t.id === id);
+    if (task && apply({ type: 'task', action: { type: 'move', id, day } })) showToast(`Moved to ${label} · ${task.text}`, true);
+  }
+
+  function detailAction(button: HTMLElement) {
+    const id = selected!;
+    const { detailEffort, detailLabel, detailDay } = button.dataset;
+    if (detailEffort) apply({ type: 'task', action: { type: 'effort', id, effort: Number(detailEffort) as Effort } });
+    else if (detailLabel !== undefined) apply({ type: 'task', action: { type: 'label', id, label: (detailLabel || null) as Label | null } });
+    else if (detailDay) moveTo(id, detailDay, detailDay === dayKey(Date.now()) ? 'Today' : detailDay);
+    else if (button.hasAttribute('data-detail-today')) moveTo(id, dayKey(Date.now()), 'Today');
+    else if (button.hasAttribute('data-detail-delete')) remove(id);
+  }
+
   function undo() {
     if (apply({ type: 'undo' })) showToast('Undone');
   }
 
+  const listed = () => (page === 'upcoming' ? upcomingTasks(store.state.tasks, dayKey(Date.now())) : todayTasks(store.state.tasks, Date.now()));
+
   function move(step: number) {
-    const tasks = todayTasks(store.state.tasks, Date.now());
+    const tasks = listed();
     if (!tasks.length) return;
     const index = tasks.findIndex((t) => t.id === selected);
     selected = tasks[Math.min(tasks.length - 1, Math.max(0, index === -1 ? 0 : index + step))].id;
@@ -299,6 +322,8 @@ export function start(root: HTMLElement) {
       onboard.goal = Number(goal.dataset.goal) as Goal;
       return renderOnboarding();
     }
+    const detail = target.closest<HTMLElement>('[data-detail-effort], [data-detail-label], [data-detail-day], [data-detail-today], [data-detail-delete]');
+    if (detail && selected) return detailAction(detail);
     const ring = target.closest<HTMLElement>('[data-toggle]');
     if (ring) return toggle(ring.dataset.toggle!);
     if (target.closest('[data-toast-action="undo"]')) return undo();
@@ -360,7 +385,7 @@ export function start(root: HTMLElement) {
       event.preventDefault();
       return openEditor(null);
     }
-    if (page !== 'today' || !plain) return;
+    if ((page !== 'today' && page !== 'upcoming') || !plain) return;
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
     const keys: Record<string, () => void> = {
       c: () => $<HTMLInputElement>('#composer')?.focus(),
@@ -371,6 +396,8 @@ export function start(root: HTMLElement) {
       x: () => selected && toggle(selected),
       ' ': () => selected && toggle(selected),
       Backspace: () => selected && remove(selected),
+      d: () => page === 'today' && selected && moveTo(selected, nextDays(Date.now(), 1)[0], 'tomorrow'),
+      m: () => page === 'upcoming' && selected && moveTo(selected, dayKey(Date.now()), 'Today'),
       Delete: () => selected && remove(selected),
       Escape: () => {
         selected = null;
