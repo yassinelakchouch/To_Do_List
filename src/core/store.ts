@@ -4,6 +4,7 @@ import { dayKey, ledger, type EarnInput } from './earn';
 import { standing, type Standing } from './leagues';
 import { questProgress, questXp, type QuestProgress } from './quests';
 import { reduceRewards, spent, SUGGESTED, type Redemption, type Reward, type RewardAction } from './rewards';
+import { SAMPLES } from './samples';
 import { reduceTasks, type Task, type TaskAction } from './tasks';
 
 export type Mood = 'storm' | 'rain' | 'cloud' | 'sun';
@@ -45,6 +46,7 @@ export type AppAction =
   | { type: 'check-in'; at: number; mood: Mood; blocker?: string }
   | { type: 'goal'; day: string; goal: Goal }
   | { type: 'settings'; patch: Partial<Settings> }
+  | { type: 'samples'; day: string; ids: string[] }
   | { type: 'undo' }
   | { type: 'reset' };
 
@@ -81,6 +83,8 @@ function next(state: AppState, action: Exclude<AppAction, { type: 'undo' } | { t
       if (state.checkIns.some((c) => c.day === day)) return state;
       return { ...state, checkIns: [...state.checkIns, { day, at: action.at, mood: action.mood, blocker: (action.blocker ?? '').trim().slice(0, 80) }] };
     }
+    case 'samples':
+      return { ...state, tasks: SAMPLES.reduce((tasks, sample, i) => reduceTasks(tasks, { type: 'add', id: action.ids[i], text: sample.text, day: action.day, effort: sample.effort, label: sample.label }), state.tasks) };
     case 'goal':
       return state.goals[action.day] === action.goal ? state : { ...state, goals: { ...state.goals, [action.day]: action.goal } };
     case 'settings': {

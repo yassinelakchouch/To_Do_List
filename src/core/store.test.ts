@@ -24,6 +24,16 @@ describe('the store', () => {
   });
 });
 
+describe('sample tasks', () => {
+  it('adds five tasks of mixed sizes for the day as one step, so one undo removes them all', () => {
+    let store = run({ type: 'samples', day: '2026-11-05', ids: ['s1', 's2', 's3', 's4', 's5'] });
+    expect(store.state.tasks.map((t) => t.effort)).toEqual([1, 3, 1, 2, 2]);
+    expect(store.state.tasks.every((t) => t.day === '2026-11-05' && !t.done)).toBe(true);
+    store = dispatch(store, { type: 'undo' });
+    expect(store.state.tasks).toEqual([]);
+  });
+});
+
 describe('your name', () => {
   it('is tidied and kept to 24 characters, and an undo never takes it back', () => {
     let store = run({ type: 'settings', patch: { name: '  Yassine   Lakchouch  ' } });
