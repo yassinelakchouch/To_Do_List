@@ -1,6 +1,6 @@
 import { CHAIN_MS, dayKey, ledger } from './core/earn';
 import { load, save } from './core/storage';
-import { createStore, dispatch, summarize, type AppAction, type Goal, type Store } from './core/store';
+import { createStore, dispatch, summarize, type AppAction, type Goal, type Mood, type Store, type Summary } from './core/store';
 import type { QuestId } from './core/quests';
 import type { Effort, Task } from './core/tasks';
 import { composer, type ComposerState } from './ui/components/composer';
@@ -16,8 +16,8 @@ import { checkInCard, type CheckInProps } from './ui/components/checkInCard';
 import { rememberSkip, skippedDay } from './ui/checkInSkip';
 import { pickPrompt, slotActions, slotPicker, slotReel, type Reel } from './ui/components/slotPicker';
 import { pickTask, spinPath, tickDelay } from './core/pick';
+import { createSound, type Cue } from './ui/sound';
 import { CHECK_IN_XP } from './core/earn';
-import type { Mood } from './core/store';
 import { exportJson } from './core/storage';
 import { sidebar } from './ui/components/sidebar';
 import { tabBar } from './ui/components/tabBar';
@@ -58,6 +58,7 @@ export function start(root: HTMLElement) {
   let pick: { id: string; landed: boolean } | null = null;
   let lastPick: string | null = null;
   let pickTimer = 0;
+  const sound = createSound(() => store.state.settings.sound);
   let settingsOpen = false;
   let keysOpen = false;
   let menu: { query: string; active: number } | null = null;
@@ -188,11 +189,13 @@ export function start(root: HTMLElement) {
       $('[data-pick-actions]')!.innerHTML = slotActions(true);
       $('[data-pick-said]')!.textContent = `Picked: ${target.text}`;
       $<HTMLElement>('[data-pick-start]')?.focus();
+      sound.play('click');
     };
     if (!moving) return land();
     const step = (k: number) => {
       if (k >= path.length) return land();
       $('[data-reel]')!.innerHTML = slotReel(rows(path[k]));
+      sound.play('ratchet');
       pickTimer = window.setTimeout(() => step(k + 1), tickDelay(k - 1));
     };
     pickTimer = window.setTimeout(() => step(1), tickDelay(0));
@@ -407,11 +410,12 @@ export function start(root: HTMLElement) {
 
   function toggle(id: string) {
     const task = store.state.tasks.find((t) => t.id === id);
-    const before = summarize(store.state, Date.now()).quests;
+    const was = summarize(store.state, Date.now());
     if (!task || !apply({ type: 'task', action: { type: 'toggle', id, at: Date.now() } })) return;
-    const after = summarize(store.state, Date.now()).quests;
-    highlight = after.find((q, i) => q.count > before[i].count)?.id ?? null;
+    const is = summarize(store.state, Date.now());
+    highlight = is.quests.find((q, i) => q.count > was.quests[i].count)?.id ?? null;
     if (task.done) return showToast(`Not done · ${task.text}`, true);
+    sound.play(tickCue(was, is));
     justDone = { id, gain: ledger({ tasks: store.state.tasks, checkIns: [] }).pay.get(id)?.amount ?? 0 };
     renderState();
     showToast(`Done · ${task.text}`, true);
@@ -420,6 +424,13 @@ export function start(root: HTMLElement) {
       justDone = null;
       if (page === 'today') renderState();
     }, JUST_DONE_MS);
+  }
+
+  // The biggest thing a tick did picks the sound: a league, a quest tier, a chain, or a plain tick.
+  function tickCue(was: Summary, is: Summary): Cue {
+    if (is.standing.tier > was.standing.tier) return 'fanfare';
+    if (is.quests.some((q, i) => q.tier > was.quests[i].tier)) return 'tier';
+    return chainNow(Date.now()) > 1 ? 'chain' : 'tick';
   }
 
   function remove(id: string) {
@@ -434,7 +445,10 @@ export function start(root: HTMLElement) {
 
   function redeemReward(rewardId: string) {
     const reward = store.state.rewards.find((r) => r.id === rewardId);
-    if (reward && apply({ type: 'reward', action: { type: 'redeem', id: newId(), rewardId, at: Date.now(), sparks: 0 } })) showToast(`${reward.name} · enjoy it`, true);
+    if (reward && apply({ type: 'reward', action: { type: 'redeem', id: newId(), rewardId, at: Date.now(), sparks: 0 } })) {
+      sound.play('thud');
+      showToast(`${reward.name} · enjoy it`, true);
+    }
   }
 
   // The editor keeps what was typed when a price step or an icon redraws it.
