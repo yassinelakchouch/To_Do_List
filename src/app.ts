@@ -11,6 +11,7 @@ import { inspector } from './ui/components/inspector';
 import { onboarding, STEPS, type OnboardingStep } from './ui/components/onboarding';
 import { settingsSheet, type Toggle } from './ui/components/settingsSheet';
 import { keysSheet } from './ui/components/keysSheet';
+import { commandMenu, filterCommands, type Command } from './ui/components/commandMenu';
 import { exportJson } from './core/storage';
 import { sidebar } from './ui/components/sidebar';
 import { tabBar } from './ui/components/tabBar';
@@ -47,6 +48,7 @@ export function start(root: HTMLElement) {
   let rewardDraft: RewardDraft | null = null;
   let settingsOpen = false;
   let keysOpen = false;
+  let menu: { query: string; active: number } | null = null;
   let resetTyped = '';
   // The first visit only: no name asked yet and nothing in the list (board T-07).
   let onboard: { step: OnboardingStep; name: string; goal: Goal } | null =
@@ -121,6 +123,42 @@ export function start(root: HTMLElement) {
     if (sheet) sheet.remove();
     if (settingsOpen) root.insertAdjacentHTML('beforeend', settingsSheet(store.state.settings, resetTyped));
     if (focus) $<HTMLElement>(focus)?.focus();
+  }
+
+  const COMMANDS: Command[] = [
+    { id: 'add', label: 'Add a task', keys: 'C' },
+    ...PAGES.map(({ page: p, label: l }) => ({ id: `go-${p}`, label: `Go to ${l}` })),
+    { id: 'undo', label: 'Undo the last step', keys: 'Z' },
+    { id: 'settings', label: 'Open settings' },
+    { id: 'keys', label: 'Show the keys', keys: '?' },
+    { id: 'replay', label: 'Replay the how-to' },
+    { id: 'export', label: 'Export your data' },
+  ];
+
+  function renderMenu() {
+    $('.command-menu')?.remove();
+    if (!menu) return;
+    root.insertAdjacentHTML('beforeend', commandMenu(COMMANDS, menu.query, menu.active));
+    const input = $<HTMLInputElement>('[data-command-input]')!;
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }
+
+  function runCommand(id: string) {
+    menu = null;
+    renderMenu();
+    if (id.startsWith('go-')) location.hash = `#/${id.slice(3)}`;
+    else if (id === 'add') {
+      if (page !== 'today') location.hash = '#/today';
+      window.setTimeout(() => $<HTMLInputElement>('#composer')?.focus());
+    } else if (id === 'undo') undo();
+    else if (id === 'settings') openSettings(true);
+    else if (id === 'keys') openKeys(true);
+    else if (id === 'export') exportData();
+    else if (id === 'replay') {
+      onboard = { step: 2, name: store.state.settings.name, goal: store.state.settings.goal };
+      renderPage();
+    }
   }
 
   function openKeys(open: boolean) {
@@ -371,6 +409,10 @@ export function start(root: HTMLElement) {
 
   root.addEventListener('input', (event) => {
     const field = event.target as HTMLInputElement;
+    if (field.matches('[data-command-input]') && menu) {
+      menu = { query: field.value, active: 0 };
+      return renderMenu();
+    }
     if (field.matches('[data-reset-input]')) {
       resetTyped = field.value;
       return renderSettings('[data-reset-input]');
@@ -380,6 +422,12 @@ export function start(root: HTMLElement) {
 
   root.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
+    const command = target.closest<HTMLElement>('[data-command]');
+    if (command) return runCommand(command.dataset.command!);
+    if (menu && !target.closest('.command-menu section')) {
+      menu = null;
+      return renderMenu();
+    }
     if (target.closest('[data-keys-close]')) return openKeys(false);
     if (target.closest('[data-open-settings]')) return openSettings(true);
     if (target.closest('[data-settings-close]')) return openSettings(false);
@@ -447,6 +495,27 @@ export function start(root: HTMLElement) {
   });
 
   window.addEventListener('keydown', (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k' && !onboard) {
+      event.preventDefault();
+      menu = menu ? null : { query: '', active: 0 };
+      return renderMenu();
+    }
+    if (menu) {
+      const shown = filterCommands(COMMANDS, menu.query);
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        menu = null;
+        renderMenu();
+      } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        menu.active = (menu.active + (event.key === 'ArrowDown' ? 1 : -1) + shown.length) % Math.max(1, shown.length);
+        renderMenu();
+      } else if (event.key === 'Enter' && shown[menu.active]) {
+        event.preventDefault();
+        runCommand(shown[menu.active].id);
+      }
+      return;
+    }
     if (keysOpen) {
       if (event.key === 'Escape' || event.key === '?') {
         event.preventDefault();
