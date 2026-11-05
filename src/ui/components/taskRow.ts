@@ -2,7 +2,7 @@ import type { Label, Task } from '../../core/tasks';
 import { esc } from '../html';
 import { effortBars, spark, statusRing } from '../parts/marks';
 
-export type RowState = 'default' | 'selected' | 'just-done';
+export type RowState = 'default' | 'selected' | 'just-done' | 'editing';
 
 export const LABELS: Record<Label, { name: string; dot: string }> = {
   work: { name: 'Work', dot: 'bg-accent' },
@@ -33,7 +33,11 @@ export function taskRow({ task, state = 'default', gain, meta }: RowProps): stri
     if (label) right += `<span class="flex h-5 items-center gap-1.5 rounded-full border border-line px-2 font-mono text-[11px] text-muted"><span class="size-1.5 rounded-full ${label.dot}"></span>${label.name}</span>`;
     if (meta) right += `<span class="font-mono text-[11px] text-muted">${esc(meta)}</span>`;
   }
-  const text = `<span class="min-w-0 flex-1 truncate text-[13.5px] ${done ? 'text-muted line-through' : 'text-cream'}">${esc(task.text)}</span>`;
+  const text =
+    state === 'editing'
+      ? `<input class="h-7 min-w-0 flex-1 rounded-md border border-cream bg-ground px-2 text-[13.5px] text-cream outline-none focus-visible:outline-none" data-edit-input value="${esc(task.text)}" maxlength="140" aria-label="Edit: ${esc(task.text)}" />`
+      : `<span class="min-w-0 flex-1 truncate text-[13.5px] ${done ? 'text-muted line-through' : 'text-cream'}" data-edit-text>${esc(task.text)}</span>`;
+  if (state === 'editing') right = `<span class="hidden font-mono text-[11px] text-muted sm:inline">↵ saves · Esc cancels</span>`;
   // Not "ring": that is a Tailwind utility that draws a 1 px outline.
   const ring = `<button type="button" class="toggle grid size-6 shrink-0 place-items-center text-muted hover:text-cream" data-toggle="${esc(task.id)}" aria-label="${done ? 'Mark not done' : 'Mark done'}: ${esc(task.text)}" aria-pressed="${done}">${statusRing(done)}</button>`;
   return `<li class="task-row flex h-[38px] items-center gap-3 px-4 max-lg:h-[52px] lg:px-[18px] ${state === 'selected' ? 'bg-surface' : 'hover:bg-surface'}" data-id="${esc(task.id)}" data-state="${state}" aria-selected="${state === 'selected'}">
