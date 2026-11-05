@@ -79,6 +79,8 @@ test('typed text is shown as text, never run as markup', async ({ page }) => {
 
 test('redeeming a reward spends sparks, stamps the card, and Z gives them back', async ({ page, isMobile }) => {
   test.skip(isMobile, 'the inspector is the computer layout; phones get Rewards as a tab');
+  // The reward shelf shows once the morning check-in is done or skipped.
+  await page.getByRole('button', { name: 'Skip for today · Esc' }).locator('visible=true').click();
   for (const text of ['Write the case study', 'Ship the release']) {
     await field(page).fill(text);
     await field(page).press('Tab');
