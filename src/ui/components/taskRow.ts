@@ -34,7 +34,8 @@ export function taskRow({ task, state = 'default', gain, meta }: RowProps): stri
     if (meta) right += `<span class="font-mono text-[11px] text-muted">${esc(meta)}</span>`;
   }
   const text = `<span class="min-w-0 flex-1 truncate text-[13.5px] ${done ? 'text-muted line-through' : 'text-cream'}">${esc(task.text)}</span>`;
-  const ring = `<button type="button" class="ring grid size-6 shrink-0 place-items-center text-muted hover:text-cream" data-toggle="${esc(task.id)}" aria-label="${done ? 'Mark not done' : 'Mark done'}: ${esc(task.text)}" aria-pressed="${done}">${statusRing(done)}</button>`;
+  // Not "ring": that is a Tailwind utility that draws a 1 px outline.
+  const ring = `<button type="button" class="toggle grid size-6 shrink-0 place-items-center text-muted hover:text-cream" data-toggle="${esc(task.id)}" aria-label="${done ? 'Mark not done' : 'Mark done'}: ${esc(task.text)}" aria-pressed="${done}">${statusRing(done)}</button>`;
   return `<li class="task-row flex h-[38px] items-center gap-3 px-4 max-lg:h-[52px] lg:px-[18px] ${state === 'selected' ? 'bg-surface' : 'hover:bg-surface'}" data-id="${esc(task.id)}" data-state="${state}" aria-selected="${state === 'selected'}">
     <span class="text-cream" title="Effort ${EFFORT_NAME[task.effort]}">${effortBars(task.effort)}</span>${ring}${text}<span class="flex items-center gap-2.5">${right}</span>
   </li>`;
