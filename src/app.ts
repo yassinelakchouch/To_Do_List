@@ -10,6 +10,7 @@ import { header } from './ui/components/header';
 import { inspector } from './ui/components/inspector';
 import { onboarding, STEPS, type OnboardingStep } from './ui/components/onboarding';
 import { settingsSheet, type Toggle } from './ui/components/settingsSheet';
+import { keysSheet } from './ui/components/keysSheet';
 import { exportJson } from './core/storage';
 import { sidebar } from './ui/components/sidebar';
 import { tabBar } from './ui/components/tabBar';
@@ -45,6 +46,7 @@ export function start(root: HTMLElement) {
   let highlight: QuestId | null = null;
   let rewardDraft: RewardDraft | null = null;
   let settingsOpen = false;
+  let keysOpen = false;
   let resetTyped = '';
   // The first visit only: no name asked yet and nothing in the list (board T-07).
   let onboard: { step: OnboardingStep; name: string; goal: Goal } | null =
@@ -119,6 +121,15 @@ export function start(root: HTMLElement) {
     if (sheet) sheet.remove();
     if (settingsOpen) root.insertAdjacentHTML('beforeend', settingsSheet(store.state.settings, resetTyped));
     if (focus) $<HTMLElement>(focus)?.focus();
+  }
+
+  function openKeys(open: boolean) {
+    keysOpen = open;
+    $('.keys')?.remove();
+    if (open) {
+      root.insertAdjacentHTML('beforeend', keysSheet());
+      $<HTMLElement>('[data-keys-close]')?.focus();
+    }
   }
 
   function openSettings(open: boolean) {
@@ -369,6 +380,7 @@ export function start(root: HTMLElement) {
 
   root.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
+    if (target.closest('[data-keys-close]')) return openKeys(false);
     if (target.closest('[data-open-settings]')) return openSettings(true);
     if (target.closest('[data-settings-close]')) return openSettings(false);
     const goalSetting = target.closest<HTMLElement>('[data-setting-goal]');
@@ -435,6 +447,13 @@ export function start(root: HTMLElement) {
   });
 
   window.addEventListener('keydown', (event) => {
+    if (keysOpen) {
+      if (event.key === 'Escape' || event.key === '?') {
+        event.preventDefault();
+        openKeys(false);
+      }
+      return;
+    }
     if (settingsOpen) {
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -454,6 +473,10 @@ export function start(root: HTMLElement) {
     }
     const plain = !isTyping(event.target) && !event.metaKey && !event.ctrlKey && !event.altKey;
     // Z undoes on every page, as the toasts promise; Esc closes the reward editor even from its fields.
+    if (plain && event.key === '?') {
+      event.preventDefault();
+      return openKeys(true);
+    }
     if (plain && (event.key === 'z' || event.key === 'Z')) {
       event.preventDefault();
       return undo();
