@@ -24,6 +24,36 @@
 
 /* In the base layer, so a component that marks focus another way (the composer's border) can turn it off with a utility. */
 @layer base {
+  /* Thin dark scrollbars instead of the browser's light default: the standard properties for Firefox and Chrome 121+,
+     the pseudo-elements for older WebKit. */
+  html {
+    color-scheme: dark;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-track) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid var(--color-ground);
+    border-radius: 999px;
+    background: var(--color-track);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-dim);
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-cream);
     outline-offset: 2px;

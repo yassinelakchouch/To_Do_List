@@ -14,3 +14,10 @@ test('other controls keep the cream focus outline from the keyboard', async ({ p
   await page.keyboard.press('Tab');
   await expect(page.locator(':focus-visible')).toHaveCSS('outline-style', 'solid');
 });
+
+test('scrollbars are thin and dark, not the browser’s light default', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveCSS('scrollbar-width', 'thin');
+  await expect(page.locator('html')).toHaveCSS('scrollbar-color', 'rgb(42, 45, 48) rgba(0, 0, 0, 0)');
+  await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
+});
