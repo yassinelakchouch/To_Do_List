@@ -21,7 +21,7 @@ export function careerPage(summary: Summary, days: Map<string, Day>, now: number
     </div>
     <div class="grid gap-7 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
       <div class="grid content-start gap-2">${heading('Quests')}${summary.quests.map((q) => questCard(q)).join('')}</div>
-      <div class="grid content-start gap-3.5">${heading('Your best days · this month')}<div class="[&>svg]:h-auto [&>svg]:w-full">${podium(summary.best, 716, 1.25)}</div><hr class="border-line" />${heading('This week')}<div class="[&>svg]:h-auto [&>svg]:w-full">${weekChart(weekDays(days, now), 716, 64)}</div></div>
+      <div class="grid content-start gap-3.5">${heading('Your best days · this month')}<div class="[&>svg]:h-auto [&>svg]:w-full">${podium(summary.best, 716, 1.25)}</div><hr class="border-line" />${heading('This week')}<div class="[&>svg]:h-auto [&>svg]:w-full">${weekChart(weekDays(days, now, summary.week.first), 716, 64)}</div></div>
     </div>
   </section>`;
 }
