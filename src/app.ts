@@ -9,6 +9,8 @@ import { challengeCard } from './ui/components/challengeCard';
 import { header } from './ui/components/header';
 import { inspector } from './ui/components/inspector';
 import { onboarding, STEPS, type OnboardingStep } from './ui/components/onboarding';
+import { settingsSheet, type Toggle } from './ui/components/settingsSheet';
+import { exportJson } from './core/storage';
 import { sidebar } from './ui/components/sidebar';
 import { tabBar } from './ui/components/tabBar';
 import { groupHeading, taskRow } from './ui/components/taskRow';
@@ -42,6 +44,8 @@ export function start(root: HTMLElement) {
   let justDone: { id: string; gain: number } | null = null;
   let highlight: QuestId | null = null;
   let rewardDraft: RewardDraft | null = null;
+  let settingsOpen = false;
+  let resetTyped = '';
   // The first visit only: no name asked yet and nothing in the list (board T-07).
   let onboard: { step: OnboardingStep; name: string; goal: Goal } | null =
     !store.state.settings.onboarded && store.state.tasks.length === 0 ? { step: 1, name: '', goal: store.state.settings.goal } : null;
@@ -105,8 +109,48 @@ export function start(root: HTMLElement) {
 
   function renderPage() {
     const summary = summarize(store.state, Date.now());
-    root.innerHTML = `<div class="flex min-h-dvh">${sidebar(page, summary, store.state.settings.name)}<div class="flex min-w-0 flex-1 flex-col"><div id="header">${header(label(), summary, chainNow(Date.now()))}</div><main class="flex-1 pb-28 lg:pb-6">${pageBody()}</main></div></div>${tabBar(page)}<div id="toast-slot" class="pointer-events-none fixed inset-x-0 bottom-24 flex justify-center px-4 lg:bottom-8 [&>*]:pointer-events-auto"></div>${onboard ? onboarding(onboard.step, onboard.name, onboard.goal) : ''}`;
+    root.innerHTML = `<div class="flex min-h-dvh">${sidebar(page, summary, store.state.settings.name)}<div class="flex min-w-0 flex-1 flex-col"><div id="header">${header(label(), summary, chainNow(Date.now()))}</div><main class="flex-1 pb-28 lg:pb-6">${pageBody()}</main></div></div>${tabBar(page)}<div id="toast-slot" class="pointer-events-none fixed inset-x-0 bottom-24 flex justify-center px-4 lg:bottom-8 [&>*]:pointer-events-auto"></div>${onboard ? onboarding(onboard.step, onboard.name, onboard.goal) : ''}${settingsOpen ? settingsSheet(store.state.settings, resetTyped) : ''}`;
     if (onboard) focusOnboarding();
+  }
+
+  // Settings change the app, never the undo history; the sheet redraws in place and keeps the focus where it was.
+  function renderSettings(focus?: string) {
+    const sheet = $('.settings');
+    if (sheet) sheet.remove();
+    if (settingsOpen) root.insertAdjacentHTML('beforeend', settingsSheet(store.state.settings, resetTyped));
+    if (focus) $<HTMLElement>(focus)?.focus();
+  }
+
+  function openSettings(open: boolean) {
+    settingsOpen = open;
+    resetTyped = '';
+    renderSettings(open ? '[data-settings-close]' : undefined);
+    if (!open) $<HTMLElement>('[data-open-settings]')?.focus();
+  }
+
+  function setSettings(patch: Partial<typeof store.state.settings>, focus?: string) {
+    store = dispatch(store, { type: 'settings', patch });
+    save(store.state);
+    renderState();
+    renderSettings(focus);
+  }
+
+  function exportData() {
+    const url = URL.createObjectURL(new Blob([exportJson(store.state, Date.now())], { type: 'application/json' }));
+    const link = Object.assign(document.createElement('a'), { href: url, download: `todo-project003-${dayKey(Date.now())}.json` });
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast('Exported · your data is in Downloads');
+  }
+
+  function resetAll() {
+    store = dispatch(store, { type: 'reset' });
+    save(store.state);
+    settingsOpen = false;
+    resetTyped = '';
+    selected = null;
+    onboard = { step: 1, name: '', goal: store.state.settings.goal };
+    renderPage();
   }
 
   function focusOnboarding() {
@@ -309,12 +353,38 @@ export function start(root: HTMLElement) {
     } else if (event.key === 'Escape') field.blur();
   });
 
+  root.addEventListener('change', (event) => {
+    const field = event.target as HTMLInputElement;
+    if (field.matches('[data-setting-name]')) setSettings({ name: field.value });
+  });
+
   root.addEventListener('input', (event) => {
-    if ((event.target as HTMLElement).id === 'composer' && $('#composer[aria-invalid="true"]')) redrawComposer();
+    const field = event.target as HTMLInputElement;
+    if (field.matches('[data-reset-input]')) {
+      resetTyped = field.value;
+      return renderSettings('[data-reset-input]');
+    }
+    if (field.id === 'composer' && $('#composer[aria-invalid="true"]')) redrawComposer();
   });
 
   root.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
+    if (target.closest('[data-open-settings]')) return openSettings(true);
+    if (target.closest('[data-settings-close]')) return openSettings(false);
+    const goalSetting = target.closest<HTMLElement>('[data-setting-goal]');
+    if (goalSetting) return setSettings({ goal: Number(goalSetting.dataset.settingGoal) as Goal }, `[data-setting-goal="${goalSetting.dataset.settingGoal}"]`);
+    const toggleSetting = target.closest<HTMLElement>('[data-setting-toggle]');
+    if (toggleSetting) {
+      const key = toggleSetting.dataset.settingToggle as Toggle;
+      return setSettings({ [key]: toggleSetting.dataset.value === 'true' }, `[data-setting-toggle="${key}"][data-value="${toggleSetting.dataset.value}"]`);
+    }
+    if (target.closest('[data-export]')) return exportData();
+    if (target.closest('[data-reset]') && resetTyped === 'RESET') return resetAll();
+    if (target.closest('[data-replay]')) {
+      settingsOpen = false;
+      onboard = { step: 2, name: store.state.settings.name, goal: store.state.settings.goal };
+      return renderPage();
+    }
     const step = target.closest<HTMLElement>('[data-onboard]');
     if (step) return onboardAction(step.dataset.onboard!);
     const goal = target.closest<HTMLElement>('[data-goal]');
@@ -365,6 +435,13 @@ export function start(root: HTMLElement) {
   });
 
   window.addEventListener('keydown', (event) => {
+    if (settingsOpen) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        openSettings(false);
+      }
+      return;
+    }
     if (onboard) {
       if (event.key === 'Escape') {
         event.preventDefault();
