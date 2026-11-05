@@ -1,6 +1,6 @@
 import { CHAIN_MS, dayKey, ledger } from './core/earn';
 import { load, save } from './core/storage';
-import { createStore, dispatch, summarize, type AppAction, type Store } from './core/store';
+import { createStore, dispatch, summarize, type AppAction, type Goal, type Store } from './core/store';
 import type { QuestId } from './core/quests';
 import type { Effort, Task } from './core/tasks';
 import { composer, type ComposerState } from './ui/components/composer';
@@ -8,6 +8,7 @@ import { emptyState } from './ui/components/emptyState';
 import { challengeCard } from './ui/components/challengeCard';
 import { header } from './ui/components/header';
 import { inspector } from './ui/components/inspector';
+import { onboarding, type OnboardingStep } from './ui/components/onboarding';
 import { sidebar } from './ui/components/sidebar';
 import { tabBar } from './ui/components/tabBar';
 import { groupHeading, taskRow } from './ui/components/taskRow';
@@ -33,6 +34,9 @@ export function start(root: HTMLElement) {
   let effort: Effort = 1;
   let justDone: { id: string; gain: number } | null = null;
   let highlight: QuestId | null = null;
+  // The first visit only: no name asked yet and nothing in the list (board T-07).
+  let onboard: { step: OnboardingStep; name: string; goal: Goal } | null =
+    !store.state.settings.onboarded && store.state.tasks.length === 0 ? { step: 1, name: '', goal: store.state.settings.goal } : null;
   let toastTimer = 0;
 
   const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector);
@@ -78,7 +82,47 @@ export function start(root: HTMLElement) {
 
   function renderPage() {
     const summary = summarize(store.state, Date.now());
-    root.innerHTML = `<div class="flex min-h-dvh">${sidebar(page, summary, store.state.settings.name)}<div class="flex min-w-0 flex-1 flex-col"><div id="header">${header(label(), summary, chainNow(Date.now()))}</div><main class="flex-1 pb-28 lg:pb-6">${pageBody()}</main></div></div>${tabBar(page)}<div id="toast-slot" class="pointer-events-none fixed inset-x-0 bottom-24 flex justify-center px-4 lg:bottom-8 [&>*]:pointer-events-auto"></div>`;
+    root.innerHTML = `<div class="flex min-h-dvh">${sidebar(page, summary, store.state.settings.name)}<div class="flex min-w-0 flex-1 flex-col"><div id="header">${header(label(), summary, chainNow(Date.now()))}</div><main class="flex-1 pb-28 lg:pb-6">${pageBody()}</main></div></div>${tabBar(page)}<div id="toast-slot" class="pointer-events-none fixed inset-x-0 bottom-24 flex justify-center px-4 lg:bottom-8 [&>*]:pointer-events-auto"></div>${onboard ? onboarding(onboard.step, onboard.name, onboard.goal) : ''}`;
+    if (onboard) focusOnboarding();
+  }
+
+  function focusOnboarding() {
+    const target = $<HTMLElement>('#onboard-name') ?? $<HTMLElement>('.onboarding [data-onboard="next"], .onboarding [data-onboard="samples"]');
+    target?.focus();
+  }
+
+  function renderOnboarding() {
+    const sheet = $('.onboarding');
+    if (!sheet) return;
+    if (!onboard) return sheet.remove();
+    sheet.outerHTML = onboarding(onboard.step, onboard.name, onboard.goal);
+    focusOnboarding();
+  }
+
+  const partOfDay = (hour: number) => (hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening');
+
+  function finishOnboarding(choice: 'skip' | 'empty' | 'samples') {
+    if (!onboard) return;
+    const { name, goal } = onboard;
+    onboard = null;
+    renderOnboarding();
+    store = dispatch(store, { type: 'settings', patch: { onboarded: true, ...(choice === 'skip' ? {} : { name, goal }) } });
+    if (choice === 'samples') store = dispatch(store, { type: 'samples', day: dayKey(Date.now()), ids: Array.from({ length: 5 }, newId) });
+    save(store.state);
+    renderState();
+    const who = store.state.settings.name;
+    showToast(choice === 'samples' ? `${partOfDay(new Date().getHours())}${who ? `, ${who}` : ''}. Five sample tasks are in Today.` : `${partOfDay(new Date().getHours())}${who ? `, ${who}` : ''}.`);
+    $<HTMLInputElement>('#composer')?.focus();
+  }
+
+  function onboardAction(action: string) {
+    if (!onboard) return;
+    const field = $<HTMLInputElement>('#onboard-name');
+    if (field) onboard.name = field.value;
+    if (action === 'next' && onboard.step < 3) onboard.step = (onboard.step + 1) as OnboardingStep;
+    else if (action === 'back' && onboard.step > 1) onboard.step = (onboard.step - 1) as OnboardingStep;
+    else if (action === 'skip' || action === 'empty' || action === 'samples') return finishOnboarding(action);
+    renderOnboarding();
   }
 
   // A change redraws the header, the list and the sidebar; the field stays mounted so typing is never interrupted.
@@ -202,6 +246,13 @@ export function start(root: HTMLElement) {
 
   root.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
+    const step = target.closest<HTMLElement>('[data-onboard]');
+    if (step) return onboardAction(step.dataset.onboard!);
+    const goal = target.closest<HTMLElement>('[data-goal]');
+    if (goal && onboard) {
+      onboard.goal = Number(goal.dataset.goal) as Goal;
+      return renderOnboarding();
+    }
     const ring = target.closest<HTMLElement>('[data-toggle]');
     if (ring) return toggle(ring.dataset.toggle!);
     if (target.closest('[data-toast-action="undo"]')) return undo();
@@ -215,6 +266,16 @@ export function start(root: HTMLElement) {
   });
 
   window.addEventListener('keydown', (event) => {
+    if (onboard) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        finishOnboarding('skip');
+      } else if (event.key === 'Enter' && !(event.target instanceof HTMLButtonElement)) {
+        event.preventDefault();
+        onboardAction(onboard.step === 3 ? 'samples' : 'next');
+      }
+      return;
+    }
     if (page !== 'today' || isTyping(event.target) || event.metaKey || event.ctrlKey || event.altKey) return;
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
     const keys: Record<string, () => void> = {
