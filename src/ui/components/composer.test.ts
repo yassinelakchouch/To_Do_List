@@ -28,4 +28,9 @@ describe('composer', () => {
     expect(html).toContain('focus-within:border-cream');
     expect(html).toContain('focus-visible:outline-none');
   });
+
+  it('can say where the task goes', () => {
+    expect(composer({ effort: 1, placeholder: 'Add a task for tomorrow…' })).toContain('placeholder="Add a task for tomorrow…"');
+    expect(composer({ effort: 1 })).toContain('placeholder="Add a task…"');
+  });
 });
