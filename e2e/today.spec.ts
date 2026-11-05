@@ -38,12 +38,12 @@ test('ticking earns sparks, shows a toast, and Z puts it back', async ({ page })
   await addTask(page, 'Record the RPS demo');
   await page.getByRole('button', { name: 'Mark done: Record the RPS demo' }).click();
   await expect(page.getByRole('button', { name: 'Mark not done: Record the RPS demo' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByLabel('10 sparks')).toBeVisible();
+  await expect(page.getByLabel('10 sparks', { exact: true })).toBeVisible();
   await expect(page.getByRole('status')).toContainText('Done · Record the RPS demo');
   await page.locator('body').click({ position: { x: 5, y: 5 } });
   await page.keyboard.press('z');
   await expect(page.getByRole('button', { name: 'Mark done: Record the RPS demo' })).toBeVisible();
-  await expect(page.getByLabel('0 sparks')).toBeVisible();
+  await expect(page.getByLabel('0 sparks', { exact: true })).toBeVisible();
 });
 
 test('the keyboard alone: C, J/K, X, Backspace and Z', async ({ page }) => {
@@ -76,4 +76,31 @@ test('typed text is shown as text, never run as markup', async ({ page }) => {
   await addTask(page, '<img src=x onerror="document.title=1">');
   await expect(rows(page).first()).toContainText('<img src=x');
   await expect(page).toHaveTitle('To do, done · todo-project003');
+});
+
+test('redeeming a reward spends sparks, stamps the card, and Z gives them back', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the inspector is the computer layout; phones get Rewards as a tab');
+  for (const text of ['Write the case study', 'Ship the release']) {
+    await field(page).fill(text);
+    await field(page).press('Tab');
+    await field(page).press('Tab');
+    await field(page).press('Enter');
+  }
+  await page.getByRole('button', { name: 'Mark done: Write the case study' }).click();
+  await page.getByRole('button', { name: 'Mark done: Ship the release' }).click();
+  await expect(page.getByLabel('90 sparks', { exact: true })).toBeVisible();
+  const panel = page.getByRole('complementary', { name: 'Your progress' });
+  await panel.getByRole('button', { name: 'Redeem Coffee at Bloom for 60 sparks' }).click();
+  await expect(panel.locator('[data-reward="coffee"]')).toContainText('enjoyed · today');
+  await expect(page.getByLabel('30 sparks', { exact: true })).toBeVisible();
+  await expect(page.getByRole('status')).toContainText('Coffee at Bloom · enjoy it');
+  await page.keyboard.press('z');
+  await expect(page.getByLabel('90 sparks', { exact: true })).toBeVisible();
+});
+
+test('on a phone the week’s challenge sits under the list', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'phones only');
+  await addTask(page, 'Buy coffee beans');
+  await expect(page.locator('#challenge-below .challenge-card')).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'Your progress' })).toBeHidden();
 });
