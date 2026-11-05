@@ -5,18 +5,30 @@ const ACCENT = 'var(--color-accent)';
 const MUTED = 'var(--color-muted)';
 
 // Synergy's athlete who becomes a legend, as our own pictogram: warm-up, jog, sprint, the tape, the podium.
-const POSES = [
-  '<circle cx="50" cy="20" r="7"/><path d="M50 29 V58 M50 34 L38 22 M50 34 L62 22 M50 58 L42 84 M50 58 L58 84"/>',
-  '<circle cx="54" cy="20" r="7"/><path d="M52 29 L46 56 M50 35 L38 46 L32 40 M50 35 L62 42 L70 36 M46 56 L58 70 L54 86 M46 56 L36 72 L26 74"/>',
-  '<circle cx="62" cy="22" r="7"/><path d="M58 30 L44 54 M54 36 L38 40 L30 32 M54 36 L70 46 L76 40 M44 54 L62 64 L66 84 M44 54 L28 66 L14 62"/><path d="M6 30 H22 M2 42 H16 M8 54 H20" stroke-dasharray="1 4"/>',
-  `<circle cx="50" cy="18" r="7"/><path d="M50 27 V56 M50 32 L36 14 M50 32 L64 14 M50 56 L40 82 M50 56 L62 80"/><path d="M8 40 Q50 48 92 40" stroke="${ACCENT}"/>`,
-  `<circle cx="50" cy="16" r="7"/><path d="M50 25 V50 M50 30 L38 18 M50 30 L62 18 M50 50 L44 70 M50 50 L56 70"/><rect x="30" y="72" width="40" height="16" rx="2"/><path d="M36 9 Q50 -3 64 9" stroke="${ACCENT}"/>`,
+// Each pose is a head, one limbs path (so one pose can morph into the next) and its extras.
+export interface Pose {
+  head: [number, number];
+  limbs: string;
+  extra: string;
+}
+
+const POSES: Pose[] = [
+  { head: [50, 20], limbs: 'M50 29 V58 M50 34 L38 22 M50 34 L62 22 M50 58 L42 84 M50 58 L58 84', extra: '' },
+  { head: [54, 20], limbs: 'M52 29 L46 56 M50 35 L38 46 L32 40 M50 35 L62 42 L70 36 M46 56 L58 70 L54 86 M46 56 L36 72 L26 74', extra: '' },
+  { head: [62, 22], limbs: 'M58 30 L44 54 M54 36 L38 40 L30 32 M54 36 L70 46 L76 40 M44 54 L62 64 L66 84 M44 54 L28 66 L14 62', extra: '<path d="M6 30 H22 M2 42 H16 M8 54 H20" stroke-dasharray="1 4"/>' },
+  { head: [50, 18], limbs: 'M50 27 V56 M50 32 L36 14 M50 32 L64 14 M50 56 L40 82 M50 56 L62 80', extra: `<path d="M8 40 Q50 48 92 40" stroke="${ACCENT}"/>` },
+  { head: [50, 16], limbs: 'M50 25 V50 M50 30 L38 18 M50 30 L62 18 M50 50 L44 70 M50 50 L56 70', extra: `<rect x="30" y="72" width="40" height="16" rx="2"/><path d="M36 9 Q50 -3 64 9" stroke="${ACCENT}"/>` },
 ];
 
+export const pose = (tier: number): Pose => POSES[Math.min(5, Math.max(1, Math.round(tier))) - 1];
+
 export function athlete(tier: number, size = 64, attrs = ''): string {
-  const pose = POSES[Math.min(5, Math.max(1, Math.round(tier))) - 1];
-  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" aria-hidden="true" focusable="false" class="athlete"${attrs}><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">${pose}</g></svg>`;
+  const { head, limbs, extra } = pose(tier);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" aria-hidden="true" focusable="false" class="athlete" data-pose="${Math.min(5, Math.max(1, Math.round(tier)))}"${attrs}><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle class="head" cx="${head[0]}" cy="${head[1]}" r="7"/><path class="limbs" d="${limbs}"/>${extra ? `<g class="extra">${extra}</g>` : ''}</g></svg>`;
 }
+
+// The track's athlete: warm-up before any XP, then jog as a Starter and sprint from Pro on.
+export const trackPose = (xp: number) => (xp > 0 ? Math.min(standing(xp).tier, 3) : 1);
 
 const text = (x: number, y: number, body: string, attrs: string) => `<text x="${x.toFixed(1)}" y="${y}" ${attrs}>${body}</text>`;
 
@@ -54,8 +66,7 @@ export function careerTrack(xp: number, width: number, compact = false): string 
   }
   // Speed lines trail behind the athlete, so they only show once there is room behind it on the track.
   if (xp > 0 && ax - size * 0.9 >= x0) parts.push(`<path class="speed" d="M${(ax - size * 0.9).toFixed(1)} ${lane - size * 0.35} H${(ax - size * 0.45).toFixed(1)} M${(ax - size * 0.8).toFixed(1)} ${lane - size * 0.2} H${(ax - size * 0.42).toFixed(1)}" stroke="${ACCENT}" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 5"/>`);
-  const pose = xp > 0 ? Math.min(you.tier, 3) : 1;
-  parts.push(athlete(pose, size, ` x="${(ax - size / 2).toFixed(1)}" y="${lane - size + 4}" color="${ACCENT}"`));
+  parts.push(athlete(trackPose(xp), size, ` x="${(ax - size / 2).toFixed(1)}" y="${lane - size + 4}" color="${ACCENT}"`));
   parts.push(text(Math.min(Math.max(ax, 30), width - 30), lane - size - 6, `${Math.floor(Math.max(0, xp)).toLocaleString('en')} XP`, `class="your-xp" text-anchor="middle" fill="${ACCENT}" font-size="11" font-family="var(--font-mono)"`));
   const height = lane + (compact ? 58 : 90);
   const top = compact ? 18 : 0;

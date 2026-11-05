@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { athlete, careerTrack } from './career';
+import { athlete, careerTrack, trackPose } from './career';
 
 const names = (svg: string) => [...svg.matchAll(/class="league-name"[^>]*>([^<]+)</g)].map((m) => m[1]);
 const runEnd = (svg: string) => Number(svg.match(/class="run" d="M[\d.]+ \d+ H([\d.]+)"/)![1]);
@@ -8,6 +8,9 @@ describe('athlete', () => {
   it('has five different poses, one per league', () => {
     expect(new Set([1, 2, 3, 4, 5].map((tier) => athlete(tier))).size).toBe(5);
     expect(athlete(0)).toBe(athlete(1));
+    expect(athlete(2)).toContain('<circle class="head" cx="54" cy="20" r="7"/><path class="limbs" d="M52 29');
+    expect(athlete(1)).not.toContain('class="extra"');
+    expect(athlete(3)).toContain('<g class="extra">');
   });
 });
 
@@ -29,6 +32,10 @@ describe('career track', () => {
     expect(careerTrack(0, 358, true)).not.toContain('class="speed"');
     expect(careerTrack(10, 358, true)).not.toContain('class="speed"');
     expect(careerTrack(900, 358, true)).toContain('class="speed"');
+  });
+
+  it('warms up before any XP, jogs as a Starter and sprints from Pro on', () => {
+    expect([0, 10, 1_000, 3_000, 10_000].map(trackPose)).toEqual([1, 1, 2, 3, 3]);
   });
 
   it('has no flag left to run to at Legend', () => {
