@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestDays, isOnPodium } from './bestDays';
+import { bestDays, newBestPlace } from './bestDays';
 import type { Effort, Task } from './tasks';
 
 const at = (date: number, hour = 10, month = 10) => new Date(2026, month, date, hour).getTime();
@@ -30,9 +30,18 @@ describe('best days', () => {
     expect(bestDays({ tasks: [], checkIns: [] }, NOW)).toEqual([]);
   });
 
-  it('says when today is on the podium', () => {
-    const before = [done('a', 3, at(1)), done('b', 3, at(2)), done('c', 3, at(3))];
-    expect(isOnPodium({ tasks: [...before, done('t', 1, at(5))], checkIns: [] }, NOW)).toBe(false);
-    expect(isOnPodium({ tasks: [...before, done('t', 3, at(5)), done('u', 1, at(5, 16))], checkIns: [] }, NOW)).toBe(true);
+  it('names a new best day only when today moves ahead of another day', () => {
+    const d = (day: string, earned: number) => ({ day, earned });
+    expect(newBestPlace([d('2026-11-04', 20), d('2026-11-03', 10)], [d('2026-11-04', 20), d('2026-11-12', 20), d('2026-11-03', 10)], '2026-11-12')).toBe(2);
+    expect(newBestPlace([d('2026-11-04', 20), d('2026-11-12', 10)], [d('2026-11-12', 30), d('2026-11-04', 20)], '2026-11-12')).toBe(1);
+    expect(newBestPlace([d('2026-11-04', 20), d('2026-11-03', 10), d('2026-11-02', 5)], [d('2026-11-04', 20), d('2026-11-12', 15), d('2026-11-03', 10)], '2026-11-12')).toBe(2);
+  });
+
+  it('stays quiet when today passes no one: a first tick, or a gain that keeps its place', () => {
+    const d = (day: string, earned: number) => ({ day, earned });
+    expect(newBestPlace([], [d('2026-11-12', 10)], '2026-11-12')).toBeNull();
+    expect(newBestPlace([d('2026-11-12', 30), d('2026-11-04', 20)], [d('2026-11-12', 40), d('2026-11-04', 20)], '2026-11-12')).toBeNull();
+    expect(newBestPlace([d('2026-11-04', 50)], [d('2026-11-04', 50), d('2026-11-12', 10)], '2026-11-12')).toBeNull();
   });
 });
+
