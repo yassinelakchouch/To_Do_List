@@ -15,6 +15,9 @@ import { groupHeading, taskRow } from './ui/components/taskRow';
 import { toast, TOAST_MS } from './ui/components/toast';
 import { dismissLoader } from './ui/loader';
 import { careerPage } from './ui/pages/careerPage';
+import { rewardsPage } from './ui/pages/rewardsPage';
+import type { RewardDraft } from './ui/components/rewardEditor';
+import { COST } from './core/rewards';
 import { pageFromHash, PAGES, type Page } from './ui/pages';
 
 const newId = () => (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`);
@@ -35,6 +38,7 @@ export function start(root: HTMLElement) {
   let effort: Effort = 1;
   let justDone: { id: string; gain: number } | null = null;
   let highlight: QuestId | null = null;
+  let rewardDraft: RewardDraft | null = null;
   // The first visit only: no name asked yet and nothing in the list (board T-07).
   let onboard: { step: OnboardingStep; name: string; goal: Goal } | null =
     !store.state.settings.onboarded && store.state.tasks.length === 0 ? { step: 1, name: '', goal: store.state.settings.goal } : null;
@@ -78,6 +82,10 @@ export function start(root: HTMLElement) {
   const challengeBelow = () => `<div id="challenge-below" class="px-4 py-4 min-[1100px]:hidden">${challengeCard(summarize(store.state, Date.now()).challenge)}</div>`;
 
   function pageBody(): string {
+    if (page === 'rewards') {
+      const now = Date.now();
+      return rewardsPage({ rewards: store.state.rewards, redeemed: store.state.redeemed, sparks: summarize(store.state, now).sparks, now, draft: rewardDraft });
+    }
     if (page === 'career') {
       const now = Date.now();
       return careerPage(summarize(store.state, now), ledgerDays(), now);
@@ -215,6 +223,28 @@ export function start(root: HTMLElement) {
     if (reward && apply({ type: 'reward', action: { type: 'redeem', id: newId(), rewardId, at: Date.now(), sparks: 0 } })) showToast(`${reward.name} · enjoy it`, true);
   }
 
+  // The editor keeps what was typed when a price step or an icon redraws it.
+  function readDraft() {
+    const field = $<HTMLInputElement>('[data-reward-form] input[name="name"]');
+    if (rewardDraft && field) rewardDraft.name = field.value;
+  }
+
+  function openEditor(draft: RewardDraft | null) {
+    rewardDraft = draft;
+    renderPage();
+    $<HTMLInputElement>('[data-reward-form] input[name="name"]')?.focus();
+  }
+
+  function saveReward() {
+    if (!rewardDraft) return;
+    readDraft();
+    const { id, name, cost, icon } = rewardDraft;
+    const action = id ? { type: 'edit' as const, id, name, cost, icon } : { type: 'add' as const, id: newId(), name, cost, icon };
+    rewardDraft = null;
+    if (apply({ type: 'reward', action })) showToast(id ? `Saved · ${name.trim()}` : `Added · ${name.trim()}`, true);
+    else openEditor({ id, name, cost, icon });
+  }
+
   function undo() {
     if (apply({ type: 'undo' })) showToast('Undone');
   }
@@ -230,6 +260,10 @@ export function start(root: HTMLElement) {
 
   root.addEventListener('submit', (event) => {
     const form = event.target as HTMLElement;
+    if (form.matches('[data-reward-form]')) {
+      event.preventDefault();
+      return saveReward();
+    }
     if (!form.matches('[data-composer]')) return;
     event.preventDefault();
     add(form.querySelector<HTMLInputElement>('#composer')!);
@@ -262,6 +296,34 @@ export function start(root: HTMLElement) {
     const ring = target.closest<HTMLElement>('[data-toggle]');
     if (ring) return toggle(ring.dataset.toggle!);
     if (target.closest('[data-toast-action="undo"]')) return undo();
+    if (target.closest('[data-reward-add], [data-action="reward-add"]')) return openEditor({ id: null, name: '', cost: 60, icon: 'cup' });
+    const edit = target.closest<HTMLElement>('[data-reward-edit]');
+    if (edit) {
+      const reward = store.state.rewards.find((r) => r.id === edit.dataset.rewardEdit);
+      return reward && openEditor({ id: reward.id, name: reward.name, cost: reward.cost, icon: reward.icon });
+    }
+    const stepButton = target.closest<HTMLElement>('[data-cost-step]');
+    if (stepButton && rewardDraft) {
+      readDraft();
+      rewardDraft.cost = Math.min(COST.max, Math.max(COST.min, rewardDraft.cost + Number(stepButton.dataset.costStep)));
+      renderPage();
+      return $<HTMLElement>(`[data-cost-step="${stepButton.dataset.costStep}"]`)?.focus();
+    }
+    const iconButton = target.closest<HTMLElement>('[data-icon]');
+    if (iconButton && rewardDraft) {
+      readDraft();
+      rewardDraft.icon = iconButton.dataset.icon as RewardDraft['icon'];
+      renderPage();
+      return $<HTMLElement>(`[data-icon="${rewardDraft.icon}"]`)?.focus();
+    }
+    if (target.closest('[data-reward-cancel]')) return openEditor(null);
+    const del = target.closest<HTMLElement>('[data-reward-delete]');
+    if (del) {
+      const reward = store.state.rewards.find((r) => r.id === del.dataset.rewardDelete);
+      rewardDraft = null;
+      if (reward && apply({ type: 'reward', action: { type: 'remove', id: reward.id } })) showToast(`Deleted · ${reward.name}`, true);
+      return;
+    }
     const redeem = target.closest<HTMLElement>('[data-redeem]');
     if (redeem) return redeemReward(redeem.dataset.redeem!);
     const row = target.closest<HTMLElement>('.task-row');
@@ -282,7 +344,17 @@ export function start(root: HTMLElement) {
       }
       return;
     }
-    if (page !== 'today' || isTyping(event.target) || event.metaKey || event.ctrlKey || event.altKey) return;
+    const plain = !isTyping(event.target) && !event.metaKey && !event.ctrlKey && !event.altKey;
+    // Z undoes on every page, as the toasts promise; Esc closes the reward editor even from its fields.
+    if (plain && (event.key === 'z' || event.key === 'Z')) {
+      event.preventDefault();
+      return undo();
+    }
+    if (event.key === 'Escape' && rewardDraft) {
+      event.preventDefault();
+      return openEditor(null);
+    }
+    if (page !== 'today' || !plain) return;
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
     const keys: Record<string, () => void> = {
       c: () => $<HTMLInputElement>('#composer')?.focus(),
@@ -294,7 +366,6 @@ export function start(root: HTMLElement) {
       ' ': () => selected && toggle(selected),
       Backspace: () => selected && remove(selected),
       Delete: () => selected && remove(selected),
-      z: () => undo(),
       Escape: () => {
         selected = null;
         renderState();
