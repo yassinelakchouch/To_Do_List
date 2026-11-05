@@ -20,7 +20,7 @@ test('the shell marks the current page and moves between pages', async ({ page, 
   await expect(page).toHaveURL(/#\/career$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Career');
   await expect(nav.getByRole('link', { name: /Career/ })).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByLabel('0 sparks')).toBeVisible();
+  await expect(page.getByLabel('0 sparks', { exact: true })).toBeVisible();
   if (isMobile) await expect(page.locator('.tab-bar')).toBeVisible();
   else await expect(page.locator('.sidebar')).toContainText('Rookie · 0 / 1,000 XP');
 });

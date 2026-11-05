@@ -1,10 +1,13 @@
 import { CHAIN_MS, dayKey, ledger } from './core/earn';
 import { load, save } from './core/storage';
 import { createStore, dispatch, summarize, type AppAction, type Store } from './core/store';
+import type { QuestId } from './core/quests';
 import type { Effort, Task } from './core/tasks';
 import { composer, type ComposerState } from './ui/components/composer';
 import { emptyState } from './ui/components/emptyState';
+import { challengeCard } from './ui/components/challengeCard';
 import { header } from './ui/components/header';
+import { inspector } from './ui/components/inspector';
 import { sidebar } from './ui/components/sidebar';
 import { tabBar } from './ui/components/tabBar';
 import { groupHeading, taskRow } from './ui/components/taskRow';
@@ -28,6 +31,7 @@ export function start(root: HTMLElement) {
   let selected: string | null = null;
   let effort: Effort = 1;
   let justDone: { id: string; gain: number } | null = null;
+  let highlight: QuestId | null = null;
   let toastTimer = 0;
 
   const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector);
@@ -56,8 +60,18 @@ export function start(root: HTMLElement) {
     return `<ul class="task-list" aria-label="Today">${groupHeading('Today', tasks.length)}${rows}</ul>`;
   }
 
+  function side(): string {
+    const now = Date.now();
+    const summary = summarize(store.state, now);
+    const days = ledger({ tasks: store.state.tasks, checkIns: store.state.checkIns.map((c) => c.day), goals: store.state.goals, defaultGoal: store.state.settings.goal }).days;
+    return inspector({ summary, rewards: store.state.rewards, redeemed: store.state.redeemed, days, now, highlight });
+  }
+
+  // Below 1100 px the inspector folds away; the week's challenge stays under the list (board T-05 E).
+  const challengeBelow = () => `<div id="challenge-below" class="px-4 py-4 min-[1100px]:hidden">${challengeCard(summarize(store.state, Date.now()).challenge)}</div>`;
+
   function pageBody(): string {
-    if (page === 'today') return `${composer({ effort })}<div id="list">${list()}</div>`;
+    if (page === 'today') return `<div class="flex min-h-full"><div class="min-w-0 flex-1">${composer({ effort })}<div id="list">${list()}</div>${challengeBelow()}</div>${side()}</div>`;
     return `<div class="px-4 py-6 lg:px-[18px]">${emptyState({ variant: 'soon', title: label() })}</div>`;
   }
 
@@ -72,6 +86,10 @@ export function start(root: HTMLElement) {
     const summary = summarize(store.state, Date.now());
     $('#header')!.innerHTML = header(label(), summary, chainNow(Date.now()));
     $('#list')!.innerHTML = list();
+    const aside = $('.inspector');
+    if (aside) aside.outerHTML = side();
+    const below = $('#challenge-below');
+    if (below) below.outerHTML = challengeBelow();
     const nav = $('.sidebar');
     if (nav) nav.outerHTML = sidebar(page, summary);
   }
@@ -116,7 +134,10 @@ export function start(root: HTMLElement) {
 
   function toggle(id: string) {
     const task = store.state.tasks.find((t) => t.id === id);
+    const before = summarize(store.state, Date.now()).quests;
     if (!task || !apply({ type: 'task', action: { type: 'toggle', id, at: Date.now() } })) return;
+    const after = summarize(store.state, Date.now()).quests;
+    highlight = after.find((q, i) => q.count > before[i].count)?.id ?? null;
     if (task.done) return showToast(`Not done · ${task.text}`, true);
     justDone = { id, gain: ledger({ tasks: store.state.tasks, checkIns: [] }).pay.get(id)?.amount ?? 0 };
     renderState();
@@ -136,6 +157,11 @@ export function start(root: HTMLElement) {
     selected = tasks[index + 1]?.id ?? tasks[index - 1]?.id ?? null;
     renderState();
     showToast(`Deleted · ${task.text}`, true);
+  }
+
+  function redeemReward(rewardId: string) {
+    const reward = store.state.rewards.find((r) => r.id === rewardId);
+    if (reward && apply({ type: 'reward', action: { type: 'redeem', id: newId(), rewardId, at: Date.now(), sparks: 0 } })) showToast(`${reward.name} · enjoy it`, true);
   }
 
   function undo() {
@@ -178,6 +204,8 @@ export function start(root: HTMLElement) {
     const ring = target.closest<HTMLElement>('[data-toggle]');
     if (ring) return toggle(ring.dataset.toggle!);
     if (target.closest('[data-toast-action="undo"]')) return undo();
+    const redeem = target.closest<HTMLElement>('[data-redeem]');
+    if (redeem) return redeemReward(redeem.dataset.redeem!);
     const row = target.closest<HTMLElement>('.task-row');
     if (row) {
       selected = row.dataset.id!;
