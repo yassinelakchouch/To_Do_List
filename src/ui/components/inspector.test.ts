@@ -28,4 +28,11 @@ describe('inspector', () => {
     expect(inspector(props(80))).toContain('data-redeem="coffee"');
     expect(inspector(props(80))).not.toContain('data-redeem="walk"');
   });
+
+  it('opens with the morning check-in when one is due', () => {
+    const base = inspector({ summary: summarize(FRESH, NOW), rewards: [], redeemed: [], days: new Map(), now: NOW });
+    expect(base).not.toContain('aria-label="Morning check-in"');
+    const due = inspector({ summary: summarize(FRESH, NOW), rewards: [], redeemed: [], days: new Map(), now: NOW, checkIn: { now: NOW, mood: null, yesterday: [], open: [] } });
+    expect(due.indexOf('Morning check-in')).toBeLessThan(due.indexOf('This week'));
+  });
 });
