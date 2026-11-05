@@ -1,4 +1,5 @@
 import { dayKey } from './earn';
+import { weekKey, type WeekRule } from './weeks';
 import type { Task } from './tasks';
 
 export type Window = 'week' | 'month';
@@ -27,14 +28,12 @@ export interface QuestProgress {
 export interface QuestInput {
   tasks: Task[];
   checkInTimes: number[];
+  weeks?: WeekRule[];
 }
 
-// Weeks start on Monday; the key is that Monday's day key. Months are keyed YYYY-MM.
-export function windowKey(window: Window, ms: number): string {
-  if (window === 'month') return dayKey(ms).slice(0, 7);
-  const d = new Date(ms);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return dayKey(d.getTime());
+// A week is keyed by its first day (Monday unless the week rules say otherwise); a month by YYYY-MM.
+export function windowKey(window: Window, ms: number, weeks: WeekRule[] = []): string {
+  return window === 'month' ? dayKey(ms).slice(0, 7) : weekKey(dayKey(ms), weeks);
 }
 
 // What each quest counts, filed by the window it falls in.
@@ -55,7 +54,7 @@ function events(id: QuestId, { tasks, checkInTimes }: QuestInput): { at: number;
 function counts(quest: (typeof QUESTS)[number], input: QuestInput): Map<string, number> {
   const byWindow = new Map<string, Set<string>>();
   events(quest.id, input).forEach((event, i) => {
-    const key = windowKey(quest.window, event.at);
+    const key = windowKey(quest.window, event.at, input.weeks);
     const seen = byWindow.get(key) ?? byWindow.set(key, new Set()).get(key)!;
     seen.add(event.key ?? String(i));
   });
@@ -66,7 +65,7 @@ const tierOf = (tiers: readonly number[], count: number) => tiers.filter((need) 
 
 export function questProgress(input: QuestInput, now: number): QuestProgress[] {
   return QUESTS.map((quest) => {
-    const window = windowKey(quest.window, now);
+    const window = windowKey(quest.window, now, input.weeks);
     const count = counts(quest, input).get(window) ?? 0;
     const tier = tierOf(quest.tiers, count);
     return { id: quest.id, name: quest.name, about: quest.about, count, tier, next: quest.tiers[tier] ?? null, window };

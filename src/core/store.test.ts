@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createStore, dispatch, FRESH, summarize, type AppAction, type Store } from './store';
+import { changeWeekStart } from './weeks';
 
 const at = (date: number, hour = 10, minute = 0) => new Date(2026, 10, date, hour, minute).getTime();
 const NOW = at(5, 18);
@@ -10,7 +11,16 @@ const tick = (id: string, when: number): AppAction => ({ type: 'task', action: {
 describe('the store', () => {
   it('starts with the three suggested rewards and the default settings', () => {
     expect(FRESH.rewards).toHaveLength(3);
-    expect(FRESH.settings).toEqual({ name: '', onboarded: false, goal: 5, checkIn: true, sound: true, motion: true });
+    expect(FRESH.settings).toEqual({ name: '', onboarded: false, goal: 5, checkIn: true, sound: true, motion: true, weeks: [] });
+  });
+
+  it('counts the week and its challenge from the chosen first day', () => {
+    const weeks = changeWeekStart([], 0, new Date(2026, 10, 11, 10).getTime());
+    const state = { ...FRESH, settings: { ...FRESH.settings, weeks } };
+    expect(summarize(state, new Date(2026, 10, 11, 10).getTime()).week).toEqual({ first: '2026-11-09', last: '2026-11-14' });
+    const sunday = summarize(state, new Date(2026, 10, 15, 10).getTime());
+    expect(sunday.week).toEqual({ first: '2026-11-15', last: '2026-11-21' });
+    expect(sunday.challenge.endsOn).toBe('2026-11-21');
   });
 
   it('keeps the same store for a refused change, so nothing redraws', () => {

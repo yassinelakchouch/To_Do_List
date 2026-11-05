@@ -3,6 +3,7 @@ import { challengeXp, weeklyChallenge, type Challenge } from './challenge';
 import { dayKey, ledger, type EarnInput } from './earn';
 import { standing, type Standing } from './leagues';
 import { questProgress, questXp, type QuestProgress } from './quests';
+import { weekEnd, weekKey, type WeekRule } from './weeks';
 import { reduceRewards, spent, SUGGESTED, type Redemption, type Reward, type RewardAction } from './rewards';
 import { SAMPLES } from './samples';
 import { reduceTasks, type Task, type TaskAction } from './tasks';
@@ -24,6 +25,7 @@ export interface Settings {
   checkIn: boolean;
   sound: boolean;
   motion: boolean;
+  weeks: WeekRule[];
 }
 
 export interface AppState {
@@ -62,7 +64,7 @@ export const FRESH: AppState = {
   redeemed: [],
   checkIns: [],
   goals: {},
-  settings: { name: '', onboarded: false, goal: 5, checkIn: true, sound: true, motion: true },
+  settings: { name: '', onboarded: false, goal: 5, checkIn: true, sound: true, motion: true, weeks: [] },
 };
 
 export const createStore = (state: AppState = FRESH): Store => ({ state, past: [] });
@@ -116,6 +118,7 @@ export interface Summary {
   quests: QuestProgress[];
   challenge: Challenge;
   best: { day: string; earned: number }[];
+  week: { first: string; last: string };
 }
 
 const earnInput = (state: AppState): EarnInput => ({ tasks: state.tasks, checkIns: state.checkIns.map((c) => c.day), goals: state.goals, defaultGoal: state.settings.goal });
@@ -123,9 +126,10 @@ const earnInput = (state: AppState): EarnInput => ({ tasks: state.tasks, checkIn
 // Everything the header, the inspector and Career show, worked out from the state; nothing is stored twice.
 export function summarize(state: AppState, now: number): Summary {
   const input = earnInput(state);
-  const questInput = { tasks: state.tasks, checkInTimes: state.checkIns.map((c) => c.at) };
+  const { weeks } = state.settings;
+  const questInput = { tasks: state.tasks, checkInTimes: state.checkIns.map((c) => c.at), weeks };
   const book = ledger(input);
-  const xp = book.earned + questXp(questInput) + challengeXp(input);
+  const xp = book.earned + questXp(questInput) + challengeXp(input, weeks);
   const today = dayKey(now);
   const day = book.days.get(today);
   return {
@@ -134,7 +138,8 @@ export function summarize(state: AppState, now: number): Summary {
     standing: standing(xp),
     today: { done: day?.done ?? 0, goal: state.goals[today] ?? state.settings.goal, goalMet: day?.goalMet ?? false, checkedIn: day?.checkedIn ?? false },
     quests: questProgress(questInput, now),
-    challenge: weeklyChallenge(input, now),
+    challenge: weeklyChallenge(input, now, weeks),
     best: bestDays(input, now),
+    week: { first: weekKey(today, weeks), last: weekEnd(today, weeks) },
   };
 }
