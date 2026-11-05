@@ -22,6 +22,10 @@ describe('upcoming page', () => {
     expect(html.split('class="task-detail').length - 1).toBe(2);
   });
 
+  it('shows the row being edited as a field', () => {
+    expect(upcomingPage({ tasks: [task('thu', '2026-11-06')], now: NOW, selected: 'thu', effort: 1, editing: 'thu' })).toContain('data-edit-input');
+  });
+
   it('says how to plan ahead when nothing is planned', () => {
     expect(upcomingPage({ tasks: [], now: NOW, selected: null, effort: 1 })).toContain('Nothing planned ahead');
   });

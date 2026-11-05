@@ -23,10 +23,11 @@ export interface UpcomingPageProps {
   now: number;
   selected: string | null;
   effort: Effort;
+  editing?: string | null;
 }
 
 // Upcoming (board T-06 H and N): add for tomorrow, tasks grouped by their day, and the selected task's detail beside them.
-export function upcomingPage({ tasks, now, selected, effort }: UpcomingPageProps): string {
+export function upcomingPage({ tasks, now, selected, effort, editing = null }: UpcomingPageProps): string {
   const today = dayKey(now);
   const [tomorrow] = nextDays(now, 1);
   const later = upcomingTasks(tasks, today);
@@ -34,7 +35,7 @@ export function upcomingPage({ tasks, now, selected, effort }: UpcomingPageProps
   for (const task of later) groups.set(task.day, [...(groups.get(task.day) ?? []), task]);
   const list = later.length
     ? `<ul class="task-list" aria-label="Upcoming">${[...groups]
-        .map(([day, list]) => groupHeading(day === tomorrow ? `Tomorrow · ${shortDay(day)}` : shortDay(day), list.length) + list.map((task) => taskRow({ task, state: task.id === selected ? 'selected' : 'default' })).join(''))
+        .map(([day, list]) => groupHeading(day === tomorrow ? `Tomorrow · ${shortDay(day)}` : shortDay(day), list.length) + list.map((task) => taskRow({ task, state: task.id === editing ? 'editing' : task.id === selected ? 'selected' : 'default' })).join(''))
         .join('')}</ul>`
     : `<div class="px-4 py-6 lg:px-[18px]">${emptyState({ variant: 'no-match', title: 'Nothing planned ahead', text: 'Add a task for tomorrow here, or press D on a task in Today.' })}</div>`;
   const chosen = later.find((t) => t.id === selected);

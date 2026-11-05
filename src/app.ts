@@ -46,6 +46,7 @@ export function start(root: HTMLElement) {
   let justDone: { id: string; gain: number } | null = null;
   let highlight: QuestId | null = null;
   let rewardDraft: RewardDraft | null = null;
+  let editing: string | null = null;
   let settingsOpen = false;
   let keysOpen = false;
   let menu: { query: string; active: number } | null = null;
@@ -78,7 +79,7 @@ export function start(root: HTMLElement) {
   function list(): string {
     const tasks = todayTasks(store.state.tasks, Date.now());
     if (!tasks.length) return `<div class="px-4 py-6 lg:px-[18px]">${emptyState({ variant: 'first-run', action: { label: 'Open the 2022 version', href: './legacy/index.html' } })}</div>`;
-    const rows = tasks.map((task) => taskRow({ task, state: task.id === selected ? 'selected' : 'default', gain: justDone?.id === task.id ? justDone.gain : undefined })).join('');
+    const rows = tasks.map((task) => taskRow({ task, state: task.id === editing ? 'editing' : task.id === selected ? 'selected' : 'default', gain: justDone?.id === task.id ? justDone.gain : undefined })).join('');
     return `<ul class="task-list" aria-label="Today">${groupHeading('Today', tasks.length)}${rows}</ul>`;
   }
 
@@ -93,7 +94,7 @@ export function start(root: HTMLElement) {
   const challengeBelow = () => `<div id="challenge-below" class="px-4 py-4 min-[1100px]:hidden">${challengeCard(summarize(store.state, Date.now()).challenge)}</div>`;
 
   function pageBody(): string {
-    if (page === 'upcoming') return upcomingPage({ tasks: store.state.tasks, now: Date.now(), selected, effort });
+    if (page === 'upcoming') return upcomingPage({ tasks: store.state.tasks, now: Date.now(), selected, effort, editing });
     if (page === 'done') {
       const now = Date.now();
       const { pay, days } = book();
@@ -365,6 +366,26 @@ export function start(root: HTMLElement) {
     else if (button.hasAttribute('data-detail-delete')) remove(id);
   }
 
+  // Edit in place (board T-02 frame 08): E or a double click; Enter or leaving the field saves, Esc puts the text back.
+  const canEdit = (id: string) => store.state.tasks.some((t) => t.id === id && !t.done);
+
+  function startEdit(id: string) {
+    editing = id;
+    selected = id;
+    renderState();
+    const input = $<HTMLInputElement>('[data-edit-input]');
+    input?.focus();
+    input?.select();
+  }
+
+  function endEdit(save: boolean) {
+    const input = $<HTMLInputElement>('[data-edit-input]');
+    const id = editing;
+    editing = null;
+    if (save && id && input) apply({ type: 'task', action: { type: 'edit', id, text: input.value } });
+    renderState();
+  }
+
   function undo() {
     if (apply({ type: 'undo' })) showToast('Undone');
   }
@@ -393,6 +414,17 @@ export function start(root: HTMLElement) {
 
   root.addEventListener('keydown', (event) => {
     const field = event.target as HTMLInputElement;
+    if (field.matches('[data-edit-input]')) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        endEdit(true);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        endEdit(false);
+      }
+      return;
+    }
     if (field.id !== 'composer') return;
     // Tab sizes the task while there is text; on an empty field Tab moves on as usual, and Esc leaves the field.
     if (event.key === 'Tab' && !event.shiftKey && field.value.trim()) {
@@ -487,11 +519,13 @@ export function start(root: HTMLElement) {
     }
     const redeem = target.closest<HTMLElement>('[data-redeem]');
     if (redeem) return redeemReward(redeem.dataset.redeem!);
+    if (target.closest('[data-edit-input]')) return;
     const row = target.closest<HTMLElement>('.task-row');
-    if (row) {
-      selected = row.dataset.id!;
-      renderState();
-    }
+    if (!row) return;
+    // The first click redraws the list, so Chrome sends no dblclick; the click count still reaches 2.
+    if (event.detail === 2 && target.closest('[data-edit-text]') && canEdit(row.dataset.id!)) return startEdit(row.dataset.id!);
+    selected = row.dataset.id!;
+    renderState();
   });
 
   window.addEventListener('keydown', (event) => {
@@ -565,6 +599,7 @@ export function start(root: HTMLElement) {
       x: () => selected && toggle(selected),
       ' ': () => selected && toggle(selected),
       Backspace: () => selected && remove(selected),
+      e: () => selected && canEdit(selected) && startEdit(selected),
       d: () => page === 'today' && selected && moveTo(selected, nextDays(Date.now(), 1)[0], 'tomorrow'),
       m: () => page === 'upcoming' && selected && moveTo(selected, dayKey(Date.now()), 'Today'),
       Delete: () => selected && remove(selected),
@@ -576,6 +611,10 @@ export function start(root: HTMLElement) {
     if (!keys[key]) return;
     event.preventDefault();
     keys[key]();
+  });
+
+  root.addEventListener('focusout', (event) => {
+    if ((event.target as HTMLElement).matches('[data-edit-input]') && editing) endEdit(true);
   });
 
   window.addEventListener('hashchange', () => {
