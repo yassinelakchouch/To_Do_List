@@ -7,6 +7,7 @@ export const KEYS: { action: string; keys: string }[] = [
   { action: 'Delete', keys: '⌫' },
   { action: 'Plan for tomorrow (Today)', keys: 'D' },
   { action: 'Move to Today (Upcoming)', keys: 'M' },
+  { action: 'Pick for me (Today)', keys: 'P' },
   { action: 'Undo', keys: 'Z' },
   { action: 'Command menu', keys: '⌘K' },
   { action: 'This sheet', keys: '?' },

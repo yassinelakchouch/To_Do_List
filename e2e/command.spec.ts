@@ -6,7 +6,7 @@ test('⌘K lists every action, filters as you type, and Enter runs the active on
   await returning(page);
   await page.keyboard.press('Control+k');
   const menu = page.getByRole('dialog', { name: 'Command menu' });
-  await expect(menu.getByRole('option')).toHaveCount(11);
+  await expect(menu.getByRole('option')).toHaveCount(12);
   await page.keyboard.type('go car');
   await expect(menu.getByRole('option')).toHaveCount(1);
   await page.keyboard.press('Enter');

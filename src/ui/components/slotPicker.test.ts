@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { slotPicker, slotReel } from './slotPicker';
+import { pickPrompt, slotPicker, slotReel } from './slotPicker';
 
 describe('slot picker', () => {
   it('is a modal dialog with three names, only the middle one read out', () => {
@@ -17,5 +17,9 @@ describe('slot picker', () => {
     expect(landed).toContain('data-pick-start');
     expect(landed).toContain('data-pick-again');
     expect(landed).toContain('Picked: b');
+  });
+
+  it('opens from a Can’t choose? prompt that names its key', () => {
+    expect(pickPrompt()).toContain('data-pick-open aria-keyshortcuts="P"');
   });
 });
