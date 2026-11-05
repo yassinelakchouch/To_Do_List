@@ -5,7 +5,7 @@ From boards T-04 (play from Synergy), T-05 (storyboard and components) and T-06 
 ## Foundation
 
 - [x] Setup: Vite, TypeScript, Tailwind tokens, CI, Pages, the 2022 version under `legacy/`
-- [ ] Tasks: add (S, M, L effort, label, day), tick, edit, delete, move, undo with Z
+- [x] Tasks: add (S, M, L effort, label, day), tick, edit, delete, move, undo with Z
 
 ## T-04 · rules and parts
 
