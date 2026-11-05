@@ -18,7 +18,7 @@ export function nextDays(now: number, count = 7): string[] {
 
 export const upcomingTasks = (tasks: Task[], today: string) => tasks.filter((t) => !t.done && t.day > today).sort((a, b) => a.day.localeCompare(b.day));
 
-export interface UpcomingPageProps {
+interface UpcomingPageProps {
   tasks: Task[];
   now: number;
   selected: string | null;

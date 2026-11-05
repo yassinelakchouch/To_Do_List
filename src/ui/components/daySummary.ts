@@ -2,7 +2,7 @@ import type { Day } from '../../core/earn';
 import { shortDay } from '../parts/podium';
 import { spark } from '../parts/marks';
 
-export interface DaySummaryProps {
+interface DaySummaryProps {
   day: string;
   facts: Day;
   goal: number;

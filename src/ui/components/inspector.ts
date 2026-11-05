@@ -10,7 +10,7 @@ import { rewardCard, rewardState } from './rewardCard';
 import { pickPrompt } from './slotPicker';
 import { weekChart, weekDays } from './weekChart';
 
-export interface InspectorProps {
+interface InspectorProps {
   summary: Summary;
   rewards: Reward[];
   redeemed: Redemption[];
