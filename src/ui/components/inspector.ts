@@ -28,8 +28,12 @@ const rule = '<hr class="border-line" />';
 export function inspector({ summary, rewards, redeemed, days, now, highlight = null, checkIn = null }: InspectorProps): string {
   const quests = [...summary.quests].sort((a, b) => Number(b.id === highlight) - Number(a.id === highlight) || a.tier - b.tier).slice(0, 2);
   const shelf = rewards.slice(0, 2).map((r) => rewardCard(r, summary.sparks, rewardState(r.cost, summary.sparks, redeemedOn(redeemed, r.id, now)))).join('');
+  // While the check-in is due it takes the place of quests and rewards (board T-04 "checkin"), so the column still fits the window.
+  const middle = checkIn
+    ? checkInCard(checkIn) + challengeCard(summary.challenge)
+    : `${challengeCard(summary.challenge)}${rule}${heading('Quests')}${quests.map((q) => questCard(q, q.id === highlight)).join('')}${rule}${heading('Rewards you set')}${shelf || '<p class="text-sm text-muted">No rewards yet.</p>'}`;
   return `<aside class="inspector hidden w-[340px] shrink-0 flex-col gap-3.5 border-l border-line p-[18px] min-[1100px]:flex" aria-label="Your progress">
-    <div class="grid gap-3.5">${checkIn ? checkInCard(checkIn) : ''}${challengeCard(summary.challenge)}${rule}${heading('Quests')}${quests.map((q) => questCard(q, q.id === highlight)).join('')}${rule}${heading('Rewards you set')}${shelf || '<p class="text-sm text-muted">No rewards yet.</p>'}</div>
+    <div class="grid gap-3.5">${middle}</div>
     <div class="mt-auto grid gap-3 border-t border-line pt-4">${heading('This week')}${weekChart(weekDays(days, now))}${pickPrompt()}</div>
   </aside>`;
 }
