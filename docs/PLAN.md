@@ -22,7 +22,7 @@ From boards T-04 (play from Synergy), T-05 (storyboard and components) and T-06 
 - [x] Morning check-in: weather moods, yesterday, today's picks, I'm ready (+15), Esc skips
 - [x] Career: the track, quests, podium, week
 - [x] Motion and sound: spark flight, digit roll, chain chip, quest fifth, stamp, slot, league crest; Motion and Sound switches
-- [ ] League up: the athlete morphing to its next pose (today it swaps pose on Career; the crest draws in on Today)
+- [x] League up: the athlete morphs into its next pose on the first Career visit after it; the crest draws in on Today
 - [x] ⌘K command menu
 
 ## T-06 · missing pages and flows
@@ -31,7 +31,7 @@ From boards T-04 (play from Synergy), T-05 (storyboard and components) and T-06 
 - [x] Rewards page and editor (add, edit, delete), redeem with Undo
 - [x] Done by day with the day's summary; reopen
 - [x] Settings (goal, check-in, sound, motion, export, reset), first run with sample tasks and a page tour, keys sheet
-- [ ] Week start in Settings (weeks start on Monday for now)
+- [x] Week start in Settings (Monday or Sunday; a change starts at the next new first day, so past weeks never regroup)
 - [x] End-to-end flows for every use case, desktop and phone; README; final release
 
 ## Rules for every change

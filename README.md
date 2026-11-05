@@ -16,7 +16,7 @@ Designed on boards T-01 to T-07 (study, storyboard, hi-fi, play from Synergy, co
 | Rewards | treats you set and price in sparks; redeem, with Undo |
 | Done | finished tasks by day, with what each day earned |
 
-A first visit asks your name, shows how it works, tours the five pages and offers five sample tasks. Settings hold the day's goal, the check-in, sound, motion, export and a reset you confirm by typing.
+A first visit asks your name, shows how it works, tours the five pages and offers five sample tasks. Settings hold the day's goal, the week's first day (Monday or Sunday), the check-in, sound, motion, export and a reset you confirm by typing.
 
 ## How it pays
 
@@ -45,7 +45,7 @@ GSAP and Web Audio, after board T-05:
 - **Quest tier:** the next fifth of the emblem draws clockwise.
 - **Pick for me:** the slot spins about 0.8 s.
 - **Redeem:** the stamp drops with a small overshoot.
-- **League up:** the crest draws in with a short fanfare.
+- **League up:** the crest draws in with a short fanfare; on your next Career visit the athlete morphs into its new pose.
 
 The Motion and Sound switches turn each off; a reduced-motion system gets the still version.
 
@@ -54,8 +54,8 @@ The Motion and Sound switches turn each off; a reduced-motion system gets the st
 ```sh
 npm ci
 npm run dev        # http://localhost:5182
-npm test           # unit tests (181)
-npm run test:e2e   # 54 flows, every use case on board T-06, on desktop and phone (keyboard-only ones skip the phone), in the installed Chrome
+npm test           # unit tests (189)
+npm run test:e2e   # 57 flows, every use case on board T-06, on desktop and phone (keyboard-only ones skip the phone), in the installed Chrome
 npm run build
 ```
 
