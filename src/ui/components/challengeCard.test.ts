@@ -13,6 +13,7 @@ describe('challenge card', () => {
   it('says it is met in words, not only in orange', () => {
     const html = challengeCard({ id: 'three-l', title: 'Finish three L tasks', have: 3, need: 3, met: true, endsOn: '2026-11-08' });
     expect(html).toContain('met · new on Monday');
+    expect(challengeCard({ id: 'three-l', title: 'Finish three L tasks', have: 3, need: 3, met: true, endsOn: '2026-11-14' })).toContain('met · new on Sunday');
     expect(html).toContain('bg-accent');
   });
 });

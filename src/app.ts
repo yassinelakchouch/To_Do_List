@@ -20,6 +20,7 @@ import { createSound, type Cue } from './ui/sound';
 import { canMove, createCounter, drawStrokes, dropStamp, flySpark, pulse, slideIn } from './ui/motion';
 import { gsap } from 'gsap';
 import { newBestPlace } from './core/bestDays';
+import { changeWeekStart, type WeekStart } from './core/weeks';
 import { num } from './ui/html';
 import { CHECK_IN_XP } from './core/earn';
 import { exportJson } from './core/storage';
@@ -662,6 +663,11 @@ export function start(root: HTMLElement) {
     if (target.closest('[data-keys-close]')) return openKeys(false);
     if (target.closest('[data-open-settings]')) return openSettings(true);
     if (target.closest('[data-settings-close]')) return openSettings(false);
+    const week = target.closest<HTMLElement>('[data-setting-week]');
+    if (week) {
+      const start = Number(week.dataset.settingWeek) as WeekStart;
+      return setSettings({ weeks: changeWeekStart(store.state.settings.weeks, start, Date.now()) }, `[data-setting-week="${start}"]`);
+    }
     const goalSetting = target.closest<HTMLElement>('[data-setting-goal]');
     if (goalSetting) return setSettings({ goal: Number(goalSetting.dataset.settingGoal) as Goal }, `[data-setting-goal="${goalSetting.dataset.settingGoal}"]`);
     const toggleSetting = target.closest<HTMLElement>('[data-setting-toggle]');

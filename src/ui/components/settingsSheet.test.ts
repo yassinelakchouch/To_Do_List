@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FRESH } from '../../core/store';
+import { changeWeekStart } from '../../core/weeks';
 import { settingsSheet } from './settingsSheet';
 
 describe('settings sheet', () => {
@@ -22,4 +23,14 @@ describe('settings sheet', () => {
     expect(html).toContain('data-export');
     expect(html).toContain('data-replay');
   });
+
+  it('chooses the week’s first day and says when a change starts', () => {
+    const wed = new Date(2026, 10, 11, 10).getTime();
+    expect(settingsSheet(FRESH.settings, '', wed)).toContain('data-setting-week="1" aria-pressed="true"');
+    const html = settingsSheet({ ...FRESH.settings, weeks: changeWeekStart([], 0, wed) }, '', wed);
+    expect(html).toContain('data-setting-week="0" aria-pressed="true"');
+    expect(html).toContain('Sunday weeks start Sun 15; this week runs to Sat 14.');
+    expect(settingsSheet({ ...FRESH.settings, weeks: changeWeekStart([], 0, wed) }, '', new Date(2026, 10, 16, 10).getTime())).not.toContain('weeks start');
+  });
 });
+

@@ -19,4 +19,10 @@ describe('week chart', () => {
     expect(svg.split('height="2.0"').length - 1).toBe(6);
     expect(svg).toContain('aria-label="This week: M 0, T 0, W 0, T 60, F 0, S 0, S 0 sparks"');
   });
+
+  it('can start on Sunday, each bar lettered by its own day', () => {
+    const week = weekDays(new Map(), NOW, '2026-11-01');
+    expect(week[0].day).toBe('2026-11-01');
+    expect(weekChart(week)).toContain('aria-label="This week: S 0, M 0, T 0, W 0, T 0, F 0, S 0 sparks"');
+  });
 });

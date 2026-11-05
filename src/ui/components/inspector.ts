@@ -34,6 +34,6 @@ export function inspector({ summary, rewards, redeemed, days, now, highlight = n
     : `${challengeCard(summary.challenge)}${rule}${heading('Quests')}${quests.map((q) => questCard(q, q.id === highlight)).join('')}${rule}${heading('Rewards you set')}${shelf || '<p class="text-sm text-muted">No rewards yet.</p>'}`;
   return `<aside class="inspector hidden w-[340px] shrink-0 flex-col gap-3.5 border-l border-line p-[18px] min-[1100px]:flex" aria-label="Your progress">
     <div class="grid gap-3.5">${middle}</div>
-    <div class="mt-auto grid gap-3 border-t border-line pt-4">${heading('This week')}${weekChart(weekDays(days, now))}${pickPrompt()}</div>
+    <div class="mt-auto grid gap-3 border-t border-line pt-4">${heading('This week')}${weekChart(weekDays(days, now, summary.week.first))}${pickPrompt()}</div>
   </aside>`;
 }
