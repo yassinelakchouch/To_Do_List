@@ -17,20 +17,22 @@ From boards T-04 (play from Synergy), T-05 (storyboard and components) and T-06 
 
 ## T-05 · screens and motion
 
-- [ ] Shell: sidebar 220 · list · inspector 340; header with pie, league, XP, sparks; phone tab bar and sheets; active in orange
-- [ ] Today: composer (C, Tab effort, empty ↵ answered in place), rows, J/K, X, E, ⌫, toasts with Undo; inspector
-- [ ] Morning check-in: weather moods, yesterday, today's picks, I'm ready (+15), Esc skips
-- [ ] Career: the track, quests, podium, week
-- [ ] Motion and sound: spark flight, digit roll, chain chip, quest fifth, stamp, athlete, slot; Motion and Sound switches
-- [ ] ⌘K command menu
+- [x] Shell: sidebar 220 · list · inspector 340; header with pie, league, XP, sparks; phone tab bar and sheets; active in orange
+- [x] Today: composer (C, Tab effort, empty ↵ answered in place), rows, J/K, X, E, ⌫, toasts with Undo; inspector
+- [x] Morning check-in: weather moods, yesterday, today's picks, I'm ready (+15), Esc skips
+- [x] Career: the track, quests, podium, week
+- [x] Motion and sound: spark flight, digit roll, chain chip, quest fifth, stamp, slot, league crest; Motion and Sound switches
+- [ ] League up: the athlete morphing to its next pose (today it swaps pose on Career; the crest draws in on Today)
+- [x] ⌘K command menu
 
 ## T-06 · missing pages and flows
 
-- [ ] Upcoming and task detail (D date, M to Today)
-- [ ] Rewards page and editor (add, edit, delete), redeem with Undo
-- [ ] Done by day with the day's summary; reopen
-- [ ] Settings (goal, check-in, sound, motion, week start, export, reset), first run with sample tasks, keys sheet
-- [ ] End-to-end flows for every use case, desktop and phone; README; final release
+- [x] Upcoming and task detail (D to tomorrow, a day in the detail, M to Today)
+- [x] Rewards page and editor (add, edit, delete), redeem with Undo
+- [x] Done by day with the day's summary; reopen
+- [x] Settings (goal, check-in, sound, motion, export, reset), first run with sample tasks and a page tour, keys sheet
+- [ ] Week start in Settings (weeks start on Monday for now)
+- [x] End-to-end flows for every use case, desktop and phone; README; final release
 
 ## Rules for every change
 
