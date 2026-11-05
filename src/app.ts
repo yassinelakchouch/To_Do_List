@@ -14,6 +14,8 @@ import { keysSheet } from './ui/components/keysSheet';
 import { commandMenu, filterCommands, type Command } from './ui/components/commandMenu';
 import { checkInCard, type CheckInProps } from './ui/components/checkInCard';
 import { rememberSkip, skippedDay } from './ui/checkInSkip';
+import { pickPrompt, slotActions, slotPicker, slotReel, type Reel } from './ui/components/slotPicker';
+import { pickTask, spinPath, tickDelay } from './core/pick';
 import { CHECK_IN_XP } from './core/earn';
 import type { Mood } from './core/store';
 import { exportJson } from './core/storage';
@@ -53,6 +55,9 @@ export function start(root: HTMLElement) {
   let editing: string | null = null;
   let checkInDraft: { mood: Mood | null; blocker: string } = { mood: null, blocker: '' };
   let skipped = skippedDay();
+  let pick: { id: string; landed: boolean } | null = null;
+  let lastPick: string | null = null;
+  let pickTimer = 0;
   let settingsOpen = false;
   let keysOpen = false;
   let menu: { query: string; active: number } | null = null;
@@ -138,7 +143,7 @@ export function start(root: HTMLElement) {
   // Below 1100 px the inspector folds away; the week's challenge stays under the list (board T-05 E).
   const challengeBelow = () => {
     const due = checkInProps();
-    return `<div id="challenge-below" class="grid gap-3 px-4 py-4 min-[1100px]:hidden">${due ? checkInCard(due) : ''}${challengeCard(summarize(store.state, Date.now()).challenge)}</div>`;
+    return `<div id="challenge-below" class="grid gap-3 px-4 py-4 min-[1100px]:hidden">${due ? checkInCard(due) : ''}${challengeCard(summarize(store.state, Date.now()).challenge)}${pickPrompt()}</div>`;
   };
 
   function pageBody(): string {
@@ -160,7 +165,57 @@ export function start(root: HTMLElement) {
     return `<div class="px-4 py-6 lg:px-[18px]">${emptyState({ variant: 'soon', title: label() })}</div>`;
   }
 
+  // Pick for me (use case 6): the slot spins about 0.8 s through today's open tasks, or lands at once with motion off.
+  function openPick() {
+    const open = todayTasks(store.state.tasks, Date.now()).filter((t) => !t.done);
+    const target = pickTask(open, lastPick);
+    if (!target) {
+      showToast('Add a task first');
+      return $<HTMLInputElement>('#composer')?.focus();
+    }
+    const n = open.length;
+    const rows = (i: number): Reel => (n === 1 ? ['', open[0].text, ''] : [open[(i - 1 + n) % n].text, open[i].text, open[(i + 1) % n].text]);
+    const path = spinPath(n, open.indexOf(target));
+    const moving = store.state.settings.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    stopPick();
+    pick = { id: target.id, landed: false };
+    root.insertAdjacentHTML('beforeend', slotPicker(rows(path[0]), false));
+    $<HTMLElement>('.pick section')?.focus();
+    const land = () => {
+      if (!pick) return;
+      pick.landed = true;
+      $('[data-reel]')!.innerHTML = slotReel(rows(path.at(-1)!));
+      $('[data-pick-actions]')!.innerHTML = slotActions(true);
+      $('[data-pick-said]')!.textContent = `Picked: ${target.text}`;
+      $<HTMLElement>('[data-pick-start]')?.focus();
+    };
+    if (!moving) return land();
+    const step = (k: number) => {
+      if (k >= path.length) return land();
+      $('[data-reel]')!.innerHTML = slotReel(rows(path[k]));
+      pickTimer = window.setTimeout(() => step(k + 1), tickDelay(k - 1));
+    };
+    pickTimer = window.setTimeout(() => step(1), tickDelay(0));
+  }
+
+  function stopPick() {
+    window.clearTimeout(pickTimer);
+    pick = null;
+    $('.pick')?.remove();
+  }
+
+  function startPick() {
+    if (!pick?.landed) return;
+    const { id } = pick;
+    lastPick = id;
+    stopPick();
+    selected = id;
+    renderState();
+    $(`.task-row[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest' });
+  }
+
   function renderPage() {
+    stopPick();
     const summary = summarize(store.state, Date.now());
     root.innerHTML = `<div class="flex min-h-dvh">${sidebar(page, summary, store.state.settings.name)}<div class="flex min-w-0 flex-1 flex-col"><div id="header">${header(label(), summary, chainNow(Date.now()))}</div><main class="flex-1 pb-28 lg:pb-6">${pageBody()}</main></div></div>${tabBar(page)}<div id="toast-slot" class="pointer-events-none fixed inset-x-0 bottom-24 flex justify-center px-4 lg:bottom-8 [&>*]:pointer-events-auto"></div>${onboard ? onboarding(onboard.step, onboard.name, onboard.goal) : ''}${settingsOpen ? settingsSheet(store.state.settings, resetTyped) : ''}`;
     if (onboard) focusOnboarding();
@@ -180,6 +235,7 @@ export function start(root: HTMLElement) {
     { id: 'undo', label: 'Undo the last step', keys: 'Z' },
     { id: 'settings', label: 'Open settings' },
     { id: 'keys', label: 'Show the keys', keys: '?' },
+    { id: 'pick', label: 'Pick for me', keys: 'P' },
     { id: 'replay', label: 'Replay the how-to' },
     { id: 'export', label: 'Export your data' },
   ];
@@ -203,6 +259,10 @@ export function start(root: HTMLElement) {
     } else if (id === 'undo') undo();
     else if (id === 'settings') openSettings(true);
     else if (id === 'keys') openKeys(true);
+    else if (id === 'pick') {
+      if (page !== 'today') location.hash = '#/today';
+      window.setTimeout(openPick);
+    }
     else if (id === 'export') exportData();
     else if (id === 'replay') {
       onboard = { step: 2, name: store.state.settings.name, goal: store.state.settings.goal };
@@ -582,6 +642,13 @@ export function start(root: HTMLElement) {
     }
     const redeem = target.closest<HTMLElement>('[data-redeem]');
     if (redeem) return redeemReward(redeem.dataset.redeem!);
+    if (target.closest('[data-pick-open]')) return openPick();
+    if (target.closest('[data-pick-start]')) return startPick();
+    if (target.closest('[data-pick-again]')) {
+      lastPick = pick?.id ?? lastPick;
+      return openPick();
+    }
+    if (pick && !target.closest('.pick section')) return stopPick();
     const mood = target.closest<HTMLElement>('[data-check-mood]');
     if (mood) return pickMood(mood.dataset.checkMood as Mood);
     if (target.closest('[data-checkin-ready]')) return checkInReady();
@@ -614,6 +681,22 @@ export function start(root: HTMLElement) {
       } else if (event.key === 'Enter' && shown[menu.active]) {
         event.preventDefault();
         runCommand(shown[menu.active].id);
+      }
+      return;
+    }
+    if (pick) {
+      const key = event.key.toLowerCase();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        stopPick();
+        $<HTMLElement>('[data-pick-open]')?.focus();
+      } else if (event.key === 'Enter' && pick.landed) {
+        event.preventDefault();
+        startPick();
+      } else if (key === 'p' && pick.landed) {
+        event.preventDefault();
+        lastPick = pick.id;
+        openPick();
       }
       return;
     }
@@ -667,6 +750,7 @@ export function start(root: HTMLElement) {
       ' ': () => selected && toggle(selected),
       Backspace: () => selected && remove(selected),
       e: () => selected && canEdit(selected) && startEdit(selected),
+      p: () => page === 'today' && openPick(),
       d: () => page === 'today' && selected && moveTo(selected, nextDays(Date.now(), 1)[0], 'tomorrow'),
       m: () => page === 'upcoming' && selected && moveTo(selected, dayKey(Date.now()), 'Today'),
       Delete: () => selected && remove(selected),
