@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+/* Boards T-04..T-06: the portfolio's near-black and cream, Linear's quiet greys, orange only for what you earned. */
+@theme {
+  --color-ground: #0b0c0d;
+  --color-surface: #141617;
+  --color-raised: #1d2022;
+  --color-track: #2a2d30;
+  --color-cream: #ece8e1;
+  --color-body: #b9b8b3;
+  --color-muted: #8e918f;
+  --color-dim: #5f625f;
+  --color-accent: #ff5a2c;
+  --color-line: rgb(236 232 225 / 0.12);
+  --color-outline: rgb(236 232 225 / 0.35);
+
+  --font-display: 'Schibsted Grotesk', system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --ease-settle: cubic-bezier(0.34, 1.45, 0.5, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-cream);
+  outline-offset: 2px;
+}
