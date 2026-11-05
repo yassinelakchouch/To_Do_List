@@ -9,6 +9,7 @@ export const ICONS = {
   chain: '<rect x="2.5" y="9" width="10" height="6" rx="3" transform="rotate(-30 7.5 12)"/><rect x="11.5" y="9" width="10" height="6" rx="3" transform="rotate(-30 16.5 12)"/>',
   weight: '<path d="M6 9 H18 L20.5 20 H3.5 Z"/><circle cx="12" cy="6" r="2.5"/>',
   bolt: '<path d="M13 2.5 L5 13.5 H11 L10 21.5 L19 9.5 H13 Z"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5 V5 M12 19 V21.5 M2.5 12 H5 M19 12 H21.5 M5.3 5.3 L7.1 7.1 M16.9 16.9 L18.7 18.7 M5.3 18.7 L7.1 16.9 M16.9 7.1 L18.7 5.3"/><circle cx="12" cy="12" r="6.5"/>',
 } as const;
 
 export type IconName = keyof typeof ICONS;

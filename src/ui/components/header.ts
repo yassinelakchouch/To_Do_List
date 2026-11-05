@@ -1,6 +1,7 @@
 import type { Summary } from '../../core/store';
 import { num } from '../html';
 import { crest } from '../parts/crest';
+import { icon } from '../parts/icons';
 import { dayPie, spark } from '../parts/marks';
 
 // The header carries the day's pie, the league, XP and sparks; a chain multiplier rides on the sparks.
@@ -14,5 +15,6 @@ export function header(title: string, summary: Summary, chain = 1): string {
     <span class="hidden items-center gap-2 rounded-full border border-line py-1 pr-2.5 pl-1.5 text-[12.5px] sm:flex"><span class="text-cream">${crest(standing.tier, 18)}</span>${standing.name}</span>
     <span class="hidden items-center gap-1.5 rounded-full border border-line px-2.5 py-1 font-mono text-[12.5px] sm:flex"><span class="text-[11px] text-muted">XP</span>${num(summary.xp)}</span>
     <span class="sparks flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 font-mono text-[13px]" aria-label="${num(summary.sparks)} sparks">${spark(14)}<span>${num(summary.sparks)}</span>${chip}</span>
+    <button type="button" class="grid size-9 place-items-center rounded-full text-muted hover:bg-surface hover:text-cream" data-open-settings aria-label="Settings">${icon('gear', 18)}</button>
   </header>`;
 }
