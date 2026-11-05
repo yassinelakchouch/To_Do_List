@@ -47,6 +47,13 @@ describe('changing', () => {
     expect(reduceTasks(base, { type: 'edit', id: 'a', text: 'Reply to the client' })).toBe(base);
   });
 
+  it('labels a task, clears the label, and ignores the same label twice', () => {
+    const labelled = reduceTasks(base, { type: 'label', id: 'a', label: 'health' });
+    expect(labelled[0].label).toBe('health');
+    expect(reduceTasks(labelled, { type: 'label', id: 'a', label: 'health' })).toBe(labelled);
+    expect(reduceTasks(labelled, { type: 'label', id: 'a', label: null })[0].label).toBeNull();
+  });
+
   it('changes effort and day, and removes', () => {
     expect(reduceTasks(base, { type: 'effort', id: 'b', effort: 2 })[1].effort).toBe(2);
     expect(reduceTasks(base, { type: 'move', id: 'b', day: '2026-11-08' })[1].day).toBe('2026-11-08');

@@ -16,6 +16,7 @@ export type TaskAction =
   | { type: 'toggle'; id: string; at: number }
   | { type: 'edit'; id: string; text: string }
   | { type: 'effort'; id: string; effort: Effort }
+  | { type: 'label'; id: string; label: Label | null }
   | { type: 'move'; id: string; day: string }
   | { type: 'remove'; id: string };
 
@@ -49,6 +50,8 @@ export function reduceTasks(tasks: Task[], action: TaskAction): Task[] {
     }
     case 'effort':
       return update(tasks, action.id, (t) => (t.effort === action.effort ? null : { ...t, effort: action.effort }));
+    case 'label':
+      return update(tasks, action.id, (t) => (t.label === action.label ? null : { ...t, label: action.label }));
     case 'move':
       return update(tasks, action.id, (t) => (t.day === action.day ? null : { ...t, day: action.day }));
     case 'remove':
