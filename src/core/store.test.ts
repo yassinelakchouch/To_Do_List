@@ -10,7 +10,7 @@ const tick = (id: string, when: number): AppAction => ({ type: 'task', action: {
 describe('the store', () => {
   it('starts with the three suggested rewards and the default settings', () => {
     expect(FRESH.rewards).toHaveLength(3);
-    expect(FRESH.settings).toEqual({ goal: 5, checkIn: true, sound: true, motion: true });
+    expect(FRESH.settings).toEqual({ name: '', onboarded: false, goal: 5, checkIn: true, sound: true, motion: true });
   });
 
   it('keeps the same store for a refused change, so nothing redraws', () => {
@@ -21,6 +21,16 @@ describe('the store', () => {
   it('checks in once a day, with the mood and a short blocker', () => {
     const store = run({ type: 'check-in', at: at(5, 8), mood: 'sun', blocker: '  waiting on the client  ' }, { type: 'check-in', at: at(5, 9), mood: 'rain' });
     expect(store.state.checkIns).toEqual([{ day: '2026-11-05', at: at(5, 8), mood: 'sun', blocker: 'waiting on the client' }]);
+  });
+});
+
+describe('your name', () => {
+  it('is tidied and kept to 24 characters, and an undo never takes it back', () => {
+    let store = run({ type: 'settings', patch: { name: '  Yassine   Lakchouch  ' } });
+    expect(store.state.settings.name).toBe('Yassine Lakchouch');
+    store = dispatch(store, { type: 'settings', patch: { name: 'x'.repeat(40) } });
+    expect(store.state.settings.name).toHaveLength(24);
+    expect(dispatch(store, { type: 'undo' })).toBe(store);
   });
 });
 
