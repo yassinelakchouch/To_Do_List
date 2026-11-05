@@ -13,7 +13,7 @@ From boards T-04 (play from Synergy), T-05 (storyboard and components) and T-06 
 - [x] Leagues (0 · 1,000 · 3,000 · 6,000 · 10,000 XP), quests (4 × 5 tiers, +25 XP), weekly challenge, best days
 - [x] Rewards you set: redeem spends sparks, never XP; undo; never below zero
 - [x] Storage: versioned, blocked-storage fallback, export, reset
-- [ ] Parts: spark, effort bars, day pie, crests, athlete poses, quest emblem, weather moods, podium, slot, stamp, icons, career track
+- [x] Parts: spark, effort bars, day pie, crests, athlete poses, quest emblem, weather moods, podium, slot, stamp, icons, career track
 
 ## T-05 · screens and motion
 
