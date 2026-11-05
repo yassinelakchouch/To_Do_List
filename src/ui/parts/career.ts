@@ -37,7 +37,7 @@ export function careerTrack(xp: number, width: number, compact = false): string 
     const reached = i < you.tier;
     const crestSize = compact ? 18 : 22;
     parts.push(`<circle cx="${x.toFixed(1)}" cy="${lane}" r="${compact ? 6 : 7}" fill="${reached ? ACCENT : 'var(--color-ground)'}" stroke="${reached ? ACCENT : MUTED}" stroke-width="2"/>`);
-    parts.push(crest(i + 1, crestSize).replace('<svg ', `<svg x="${(x - crestSize / 2).toFixed(1)}" y="${lane + (compact ? 16 : 26)}" color="${reached ? 'var(--color-cream)' : MUTED}" `));
+    parts.push(crest(i + 1, crestSize, reached ? ACCENT : 'var(--color-dim)').replace('<svg ', `<svg x="${(x - crestSize / 2).toFixed(1)}" y="${lane + (compact ? 16 : 26)}" color="${reached ? 'var(--color-cream)' : MUTED}" `));
     const named = !compact || i === you.tier - 1 || i === you.tier;
     if (!named) return;
     const anchor = compact ? 'middle' : i === 0 ? 'start' : i === 4 ? 'end' : 'middle';
@@ -52,7 +52,8 @@ export function careerTrack(xp: number, width: number, compact = false): string 
     parts.push(`<path class="flag" d="M${fx.toFixed(1)} ${lane - 8} V${lane - 8 - flag} L${(fx + 16).toFixed(1)} ${lane - 2 - flag} L${fx.toFixed(1)} ${lane + 4 - flag}" fill="none" stroke="var(--color-cream)" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3 3"/>`);
     if (!compact) parts.push(text(fx + 24, lane - 38, `${you.toNext.toLocaleString('en')} XP to ${you.next}`, `fill="var(--color-cream)" font-size="11" font-family="var(--font-mono)"`));
   }
-  if (xp > 0) parts.push(`<path class="speed" d="M${(ax - size * 0.9).toFixed(1)} ${lane - size * 0.35} H${(ax - size * 0.45).toFixed(1)} M${(ax - size * 0.8).toFixed(1)} ${lane - size * 0.2} H${(ax - size * 0.42).toFixed(1)}" stroke="${ACCENT}" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 5"/>`);
+  // Speed lines trail behind the athlete, so they only show once there is room behind it on the track.
+  if (xp > 0 && ax - size * 0.9 >= x0) parts.push(`<path class="speed" d="M${(ax - size * 0.9).toFixed(1)} ${lane - size * 0.35} H${(ax - size * 0.45).toFixed(1)} M${(ax - size * 0.8).toFixed(1)} ${lane - size * 0.2} H${(ax - size * 0.42).toFixed(1)}" stroke="${ACCENT}" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 5"/>`);
   const pose = xp > 0 ? Math.min(you.tier, 3) : 1;
   parts.push(athlete(pose, size, ` x="${(ax - size / 2).toFixed(1)}" y="${lane - size + 4}" color="${ACCENT}"`));
   parts.push(text(Math.min(Math.max(ax, 30), width - 30), lane - size - 6, `${Math.floor(Math.max(0, xp)).toLocaleString('en')} XP`, `class="your-xp" text-anchor="middle" fill="${ACCENT}" font-size="11" font-family="var(--font-mono)"`));

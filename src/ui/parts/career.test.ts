@@ -24,10 +24,11 @@ describe('career track', () => {
     expect(names(careerTrack(0, 304, true))).toEqual(['Rookie', 'Starter']);
   });
 
-  it('runs further along with more XP, and only shows speed lines once something is earned', () => {
+  it('runs further along with more XP, with speed lines only once there is track behind the athlete', () => {
     expect(runEnd(careerTrack(2_140, 1_100))).toBeGreaterThan(runEnd(careerTrack(1_000, 1_100)));
     expect(careerTrack(0, 358, true)).not.toContain('class="speed"');
-    expect(careerTrack(10, 358, true)).toContain('class="speed"');
+    expect(careerTrack(10, 358, true)).not.toContain('class="speed"');
+    expect(careerTrack(900, 358, true)).toContain('class="speed"');
   });
 
   it('has no flag left to run to at Legend', () => {
