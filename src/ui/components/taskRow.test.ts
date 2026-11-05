@@ -38,6 +38,13 @@ describe('task row', () => {
     expect(html).toContain('&lt;b&gt;bold&lt;/b&gt; &amp; &quot;quoted&quot;');
   });
 
+  it('turns the text into a labelled field while editing, with how to save or cancel', () => {
+    const html = taskRow({ task: task(), state: 'editing' });
+    expect(html).toContain('data-edit-input value="Reply to the Hermex client" maxlength="140" aria-label="Edit: Reply to the Hermex client"');
+    expect(html).toContain('↵ saves · Esc cancels');
+    expect(html).not.toContain('data-edit-text');
+  });
+
   it('heads a group with its name and count', () => {
     expect(groupHeading('This week', 3)).toContain('This week<span class="font-mono text-[11px] text-muted">3</span>');
   });

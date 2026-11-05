@@ -2,6 +2,7 @@ export const KEYS: { action: string; keys: string }[] = [
   { action: 'Add a task', keys: 'C' },
   { action: 'Size it while typing', keys: 'Tab' },
   { action: 'Done / not done', keys: 'X' },
+  { action: 'Edit the text', keys: 'E' },
   { action: 'Move through the list', keys: 'J K' },
   { action: 'Delete', keys: '⌫' },
   { action: 'Plan for tomorrow (Today)', keys: 'D' },
