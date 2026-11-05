@@ -16,6 +16,12 @@ describe('shell', () => {
     expect(tabBar('done').split('aria-current="page"').length - 1).toBe(1);
   });
 
+  it('names you at the top of the sidebar, escaped, or says “You”', () => {
+    expect(sidebar('today', summary, 'Yassine')).toContain('Yassine</div>');
+    expect(sidebar('today', summary, '<b>')).toContain('&lt;b&gt;</div>');
+    expect(sidebar('today', summary)).toContain('You</div>');
+  });
+
   it('shows the league line at the sidebar’s foot', () => {
     expect(sidebar('today', summary)).toContain('Rookie · 0 / 1,000 XP');
   });

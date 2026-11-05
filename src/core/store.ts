@@ -17,6 +17,8 @@ export interface CheckIn {
 }
 
 export interface Settings {
+  name: string;
+  onboarded: boolean;
   goal: Goal;
   checkIn: boolean;
   sound: boolean;
@@ -47,6 +49,10 @@ export type AppAction =
   | { type: 'reset' };
 
 const UNDO_DEPTH = 30;
+export const MAX_NAME = 24;
+
+// A name is kept as typed, tidied: spaces folded, 24 characters at most; empty means "you".
+export const cleanName = (name: string) => name.trim().replace(/\s+/g, ' ').slice(0, MAX_NAME);
 
 export const FRESH: AppState = {
   tasks: [],
@@ -54,7 +60,7 @@ export const FRESH: AppState = {
   redeemed: [],
   checkIns: [],
   goals: {},
-  settings: { goal: 5, checkIn: true, sound: true, motion: true },
+  settings: { name: '', onboarded: false, goal: 5, checkIn: true, sound: true, motion: true },
 };
 
 export const createStore = (state: AppState = FRESH): Store => ({ state, past: [] });
@@ -77,8 +83,10 @@ function next(state: AppState, action: Exclude<AppAction, { type: 'undo' } | { t
     }
     case 'goal':
       return state.goals[action.day] === action.goal ? state : { ...state, goals: { ...state.goals, [action.day]: action.goal } };
-    case 'settings':
-      return { ...state, settings: { ...state.settings, ...action.patch } };
+    case 'settings': {
+      const patch = action.patch.name === undefined ? action.patch : { ...action.patch, name: cleanName(action.patch.name) };
+      return { ...state, settings: { ...state.settings, ...patch } };
+    }
   }
 }
 

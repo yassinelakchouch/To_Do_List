@@ -78,7 +78,7 @@ export function start(root: HTMLElement) {
 
   function renderPage() {
     const summary = summarize(store.state, Date.now());
-    root.innerHTML = `<div class="flex min-h-dvh">${sidebar(page, summary)}<div class="flex min-w-0 flex-1 flex-col"><div id="header">${header(label(), summary, chainNow(Date.now()))}</div><main class="flex-1 pb-28 lg:pb-6">${pageBody()}</main></div></div>${tabBar(page)}<div id="toast-slot" class="pointer-events-none fixed inset-x-0 bottom-24 flex justify-center px-4 lg:bottom-8 [&>*]:pointer-events-auto"></div>`;
+    root.innerHTML = `<div class="flex min-h-dvh">${sidebar(page, summary, store.state.settings.name)}<div class="flex min-w-0 flex-1 flex-col"><div id="header">${header(label(), summary, chainNow(Date.now()))}</div><main class="flex-1 pb-28 lg:pb-6">${pageBody()}</main></div></div>${tabBar(page)}<div id="toast-slot" class="pointer-events-none fixed inset-x-0 bottom-24 flex justify-center px-4 lg:bottom-8 [&>*]:pointer-events-auto"></div>`;
   }
 
   // A change redraws the header, the list and the sidebar; the field stays mounted so typing is never interrupted.
@@ -92,7 +92,7 @@ export function start(root: HTMLElement) {
     const below = $('#challenge-below');
     if (below) below.outerHTML = challengeBelow();
     const nav = $('.sidebar');
-    if (nav) nav.outerHTML = sidebar(page, summary);
+    if (nav) nav.outerHTML = sidebar(page, summary, store.state.settings.name);
   }
 
   // Redraws the field in a new state or size, keeping what was typed and the focus.
