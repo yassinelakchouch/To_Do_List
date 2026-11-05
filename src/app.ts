@@ -45,7 +45,7 @@ const JUST_DONE_MS = 1_800;
 const ORDINAL = ['1st', '2nd', '3rd'];
 
 // Today holds what is due by today and still open, plus what was finished today, in the order it was added.
-export function todayTasks(tasks: Task[], now: number): Task[] {
+function todayTasks(tasks: Task[], now: number): Task[] {
   const today = dayKey(now);
   return tasks.filter((t) => (!t.done && t.day <= today) || (t.done && t.doneAt !== null && dayKey(t.doneAt) === today));
 }
