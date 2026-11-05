@@ -19,6 +19,7 @@ import { pickTask, spinPath, tickDelay } from './core/pick';
 import { createSound, type Cue } from './ui/sound';
 import { canMove, createCounter, drawStrokes, dropStamp, flySpark, pulse, slideIn } from './ui/motion';
 import { gsap } from 'gsap';
+import { newBestPlace } from './core/bestDays';
 import { num } from './ui/html';
 import { CHECK_IN_XP } from './core/earn';
 import { exportJson } from './core/storage';
@@ -39,6 +40,7 @@ import { pageFromHash, PAGES, type Page } from './ui/pages';
 const newId = () => (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`);
 const isTyping = (target: EventTarget | null) => target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 const JUST_DONE_MS = 1_800;
+const ORDINAL = ['1st', '2nd', '3rd'];
 
 // Today holds what is due by today and still open, plus what was finished today, in the order it was added.
 export function todayTasks(tasks: Task[], now: number): Task[] {
@@ -459,13 +461,14 @@ export function start(root: HTMLElement) {
     if (task.done) return showToast(`Not done · ${task.text}`, true);
     sound.play(tickCue(was, is));
     const crossed = is.quests.find((q, i) => q.tier > was.quests[i].tier);
+    const best = newBestPlace(was.best, is.best, dayKey(Date.now()));
     justDone = { id, gain: ledger({ tasks: store.state.tasks, checkIns: [] }).pay.get(id)?.amount ?? 0 };
     renderState();
     const from = $(`.task-row[data-id="${id}"] .gain`) ?? $(`.task-row[data-id="${id}"] .toggle`);
     const pill = $('.sparks');
     if (moving() && justDone.gain && from && pill) flySpark(`+${justDone.gain}`, from, pill, () => pulse($('.sparks')));
     if (moving()) celebrate(crossed?.id ?? null, is.standing.tier > was.standing.tier);
-    showToast(`Done · ${task.text}`, true);
+    showToast(best ? `New best day · ${ORDINAL[best - 1]} this month` : `Done · ${task.text}`, true);
     window.setTimeout(() => {
       if (justDone?.id !== id) return;
       justDone = null;
