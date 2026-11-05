@@ -15,6 +15,7 @@ import { groupHeading, taskRow } from './ui/components/taskRow';
 import { toast, TOAST_MS } from './ui/components/toast';
 import { dismissLoader } from './ui/loader';
 import { careerPage } from './ui/pages/careerPage';
+import { donePage } from './ui/pages/donePage';
 import { rewardsPage } from './ui/pages/rewardsPage';
 import type { RewardDraft } from './ui/components/rewardEditor';
 import { COST } from './core/rewards';
@@ -45,7 +46,7 @@ export function start(root: HTMLElement) {
   let toastTimer = 0;
 
   const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector);
-  const ledgerDays = () => ledger({ tasks: store.state.tasks, checkIns: store.state.checkIns.map((c) => c.day), goals: store.state.goals, defaultGoal: store.state.settings.goal }).days;
+  const book = () => ledger({ tasks: store.state.tasks, checkIns: store.state.checkIns.map((c) => c.day), goals: store.state.goals, defaultGoal: store.state.settings.goal });
   const label = () => PAGES.find((p) => p.page === page)!.label;
 
   const showToast = (text: string, undoable = false) => {
@@ -74,7 +75,7 @@ export function start(root: HTMLElement) {
   function side(): string {
     const now = Date.now();
     const summary = summarize(store.state, now);
-    const days = ledgerDays();
+    const days = book().days;
     return inspector({ summary, rewards: store.state.rewards, redeemed: store.state.redeemed, days, now, highlight });
   }
 
@@ -82,13 +83,18 @@ export function start(root: HTMLElement) {
   const challengeBelow = () => `<div id="challenge-below" class="px-4 py-4 min-[1100px]:hidden">${challengeCard(summarize(store.state, Date.now()).challenge)}</div>`;
 
   function pageBody(): string {
+    if (page === 'done') {
+      const now = Date.now();
+      const { pay, days } = book();
+      return donePage({ tasks: store.state.tasks, pay, days, best: summarize(store.state, now).best, goalFor: (day) => store.state.goals[day] ?? store.state.settings.goal, now });
+    }
     if (page === 'rewards') {
       const now = Date.now();
       return rewardsPage({ rewards: store.state.rewards, redeemed: store.state.redeemed, sparks: summarize(store.state, now).sparks, now, draft: rewardDraft });
     }
     if (page === 'career') {
       const now = Date.now();
-      return careerPage(summarize(store.state, now), ledgerDays(), now);
+      return careerPage(summarize(store.state, now), book().days, now);
     }
     if (page === 'today') return `<div class="flex min-h-full"><div class="min-w-0 flex-1">${composer({ effort })}<div id="list">${list()}</div>${challengeBelow()}</div>${side()}</div>`;
     return `<div class="px-4 py-6 lg:px-[18px]">${emptyState({ variant: 'soon', title: label() })}</div>`;
