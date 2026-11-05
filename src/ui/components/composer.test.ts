@@ -22,4 +22,10 @@ describe('composer', () => {
     expect(html).toContain('aria-invalid="true"');
     expect(html).toContain('border-accent');
   });
+
+  it('shows focus once, on its border, with no second box inside', () => {
+    const html = composer({ effort: 1 });
+    expect(html).toContain('focus-within:border-cream');
+    expect(html).toContain('focus-visible:outline-none');
+  });
 });

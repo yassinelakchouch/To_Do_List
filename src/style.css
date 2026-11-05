@@ -22,7 +22,10 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-cream);
-  outline-offset: 2px;
+/* In the base layer, so a component that marks focus another way (the composer's border) can turn it off with a utility. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-cream);
+    outline-offset: 2px;
+  }
 }
