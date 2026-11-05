@@ -18,6 +18,7 @@ import { pickPrompt, slotActions, slotPicker, slotReel, type Reel } from './ui/c
 import { pickTask, spinPath, tickDelay } from './core/pick';
 import { createSound, type Cue } from './ui/sound';
 import { canMove, createCounter, drawStrokes, dropStamp, flySpark, pulse, slideIn } from './ui/motion';
+import { gsap } from 'gsap';
 import { num } from './ui/html';
 import { CHECK_IN_XP } from './core/earn';
 import { exportJson } from './core/storage';
@@ -87,12 +88,34 @@ export function start(root: HTMLElement) {
   };
 
   // The chain still running: the last tick's multiplier while it is within 90 s.
-  const chainNow = (now: number) => {
+  const lastTick = () => {
     const pay = ledger({ tasks: store.state.tasks, checkIns: [] }).pay;
     const lastId = [...pay.keys()].at(-1);
     const doneAt = lastId ? store.state.tasks.find((t) => t.id === lastId)?.doneAt : null;
-    return lastId && doneAt && now - doneAt <= CHAIN_MS ? pay.get(lastId)!.chain : 1;
+    return lastId && doneAt ? { chain: pay.get(lastId)!.chain, doneAt } : null;
   };
+  const chainNow = (now: number) => {
+    const last = lastTick();
+    return last && now - last.doneAt <= CHAIN_MS ? last.chain : 1;
+  };
+  let chainTimer = 0;
+
+  // The ×2 chip leaves after 90 quiet seconds (use case 4): only the header redraws, so open sheets stay open.
+  function endChainLater() {
+    window.clearTimeout(chainTimer);
+    const last = lastTick();
+    const left = last && last.chain > 1 ? last.doneAt + CHAIN_MS - Date.now() : 0;
+    if (left <= 0) return;
+    chainTimer = window.setTimeout(() => {
+      const redraw = () => {
+        headerHtml = header(label(), summarize(store.state, Date.now()), chainNow(Date.now()));
+        $('#header')!.innerHTML = headerHtml;
+      };
+      const chip = $('.chain');
+      if (chip && moving()) gsap.to(chip, { opacity: 0, x: -4, duration: 0.3, onComplete: redraw });
+      else redraw();
+    }, left + 50);
+  }
 
   function list(): string {
     const tasks = todayTasks(store.state.tasks, Date.now());
@@ -375,6 +398,7 @@ export function start(root: HTMLElement) {
     }
     counter.sync(summary, moving(), flightNext ? 0.55 : 0);
     flightNext = false;
+    endChainLater();
     $('#list')!.innerHTML = list();
     const aside = $('.inspector');
     if (aside) aside.outerHTML = side();
