@@ -4,7 +4,7 @@ import { esc } from '../html';
 import { shortDay } from '../parts/podium';
 import { LABELS } from './taskRow';
 
-export interface TaskDetailProps {
+interface TaskDetailProps {
   task: Task;
   today: string;
   days: string[];

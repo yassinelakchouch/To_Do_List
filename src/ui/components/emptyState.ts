@@ -2,13 +2,13 @@ import { esc } from '../html';
 
 export type EmptyVariant = 'first-run' | 'soon' | 'all-done' | 'no-match';
 
-export interface EmptyAction {
+interface EmptyAction {
   label: string;
   href?: string;
   action?: string;
 }
 
-export interface EmptyProps {
+interface EmptyProps {
   variant: EmptyVariant;
   title?: string;
   text?: string;

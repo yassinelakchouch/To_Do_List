@@ -2,7 +2,7 @@ import type { Label, Task } from '../../core/tasks';
 import { esc } from '../html';
 import { effortBars, spark, statusRing } from '../parts/marks';
 
-export type RowState = 'default' | 'selected' | 'just-done' | 'editing';
+type RowState = 'default' | 'selected' | 'just-done' | 'editing';
 
 export const LABELS: Record<Label, { name: string; dot: string }> = {
   work: { name: 'Work', dot: 'bg-accent' },
@@ -12,7 +12,7 @@ export const LABELS: Record<Label, { name: string; dot: string }> = {
 
 const EFFORT_NAME = { 1: 'S', 2: 'M', 3: 'L' } as const;
 
-export interface RowProps {
+interface RowProps {
   task: Task;
   state?: RowState;
   gain?: number;

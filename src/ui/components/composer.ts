@@ -4,7 +4,7 @@ import { effortBars } from '../parts/marks';
 
 export type ComposerState = 'idle' | 'empty';
 
-export interface ComposerProps {
+interface ComposerProps {
   effort: Effort;
   state?: ComposerState;
   placeholder?: string;

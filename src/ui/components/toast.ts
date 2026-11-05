@@ -1,6 +1,6 @@
 import { esc } from '../html';
 
-export interface ToastProps {
+interface ToastProps {
   text: string;
   action?: { label: string; key: string; id: string };
 }

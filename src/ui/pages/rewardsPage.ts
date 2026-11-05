@@ -5,7 +5,7 @@ import { rewardEditor, type RewardDraft } from '../components/rewardEditor';
 import { esc, num } from '../html';
 import { spark } from '../parts/marks';
 
-export interface RewardsPageProps {
+interface RewardsPageProps {
   rewards: Reward[];
   redeemed: Redemption[];
   sparks: number;

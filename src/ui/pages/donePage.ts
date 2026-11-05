@@ -6,7 +6,7 @@ import { emptyState } from '../components/emptyState';
 import { groupHeading, taskRow } from '../components/taskRow';
 import { shortDay } from '../parts/podium';
 
-export interface DonePageProps {
+interface DonePageProps {
   tasks: Task[];
   pay: Map<string, { amount: number }>;
   days: Map<string, Day>;
