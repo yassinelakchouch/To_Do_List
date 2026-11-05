@@ -11,6 +11,8 @@ test('a first visit asks your name, shows how it works, sets your day and adds s
   await expect(dialog).toContainText('How it works, Yassine');
   await expect(dialog.getByRole('img', { name: /sized L with Tab/ })).toBeVisible();
   await dialog.getByRole('button', { name: 'Next ↵' }).click();
+  await expect(dialog.getByRole('list', { name: 'The five pages' }).getByRole('listitem')).toHaveCount(5);
+  await dialog.getByRole('button', { name: 'Next ↵' }).click();
   await dialog.getByRole('button', { name: '3' }).click();
   await expect(dialog.getByRole('button', { name: '3' })).toHaveAttribute('aria-pressed', 'true');
   await dialog.getByRole('button', { name: 'Try with 5 sample tasks' }).click();
