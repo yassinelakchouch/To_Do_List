@@ -10,7 +10,7 @@ From boards T-04 (play from Synergy), T-05 (storyboard and components) and T-06 
 ## T-04 · rules and parts
 
 - [x] Earning: S 10 · M 20 · L 30 as XP and sparks; check-in +15; day goal +20; chain ×2 within 90 s (×3 cap); un-tick takes back
-- [ ] Leagues (0 · 1,000 · 3,000 · 6,000 · 10,000 XP), quests (4 × 5 tiers, +25 XP), weekly challenge, best days
+- [x] Leagues (0 · 1,000 · 3,000 · 6,000 · 10,000 XP), quests (4 × 5 tiers, +25 XP), weekly challenge, best days
 - [ ] Rewards you set: redeem spends sparks, never XP; undo; never below zero
 - [ ] Storage: versioned, blocked-storage fallback, export, reset
 - [ ] Parts: spark, effort bars, day pie, crests, athlete poses, quest emblem, weather moods, podium, slot, stamp, icons, career track
