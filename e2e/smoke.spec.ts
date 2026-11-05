@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
+import { returning } from './helpers';
 
 test('the page names itself and keeps the 2022 version one link away', async ({ page }) => {
-  await page.goto('/');
+  await returning(page);
   await expect(page).toHaveTitle('To do, done · todo-project003');
   await page.getByRole('link', { name: 'Open the 2022 version' }).click();
   await expect(page).toHaveTitle('toDoApp');
@@ -13,7 +14,7 @@ test('the page names itself and keeps the 2022 version one link away', async ({ 
 });
 
 test('the shell marks the current page and moves between pages', async ({ page, isMobile }) => {
-  await page.goto('/');
+  await returning(page);
   const nav = page.getByRole('navigation', { name: 'Pages' }).locator('visible=true');
   await expect(nav.getByRole('link', { name: /Today/ })).toHaveAttribute('aria-current', 'page');
   await nav.getByRole('link', { name: /Career/ }).click();
@@ -26,7 +27,7 @@ test('the shell marks the current page and moves between pages', async ({ page, 
 });
 
 test('on a phone nothing scrolls sideways', async ({ page }) => {
-  await page.goto('/');
+  await returning(page);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);

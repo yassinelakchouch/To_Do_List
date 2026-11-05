@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { returning } from './helpers';
 
 const field = (page: Page) => page.getByRole('textbox', { name: 'Add a task' });
 const rows = (page: Page) => page.locator('.task-row');
@@ -8,9 +9,7 @@ const addTask = async (page: Page, text: string) => {
 };
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
+  await returning(page);
 });
 
 test('adds with Enter, answers an empty Enter under the field, and keeps the field ready', async ({ page }) => {
