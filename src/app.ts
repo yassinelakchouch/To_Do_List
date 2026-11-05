@@ -1,7 +1,10 @@
 import { load } from './core/storage';
 import { createStore, summarize } from './core/store';
 import { emptyState } from './ui/components/emptyState';
-import { header, pageFromHash, PAGES, sidebar, tabBar, type Page } from './ui/shell';
+import { header } from './ui/components/header';
+import { sidebar } from './ui/components/sidebar';
+import { tabBar } from './ui/components/tabBar';
+import { pageFromHash, PAGES, type Page } from './ui/pages';
 
 // Pages land one release at a time; until a page arrives it says so, and Today keeps the 2022 list one link away.
 function body(page: Page): string {
