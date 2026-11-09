@@ -1,10 +1,10 @@
 # To do, done · todo-project003
 
-A 2022 to-do list, rebuilt in the open: Linear's calm rows, and a career you grow by finishing what you planned. Every piece was released as it landed; the 2022 version stays at [`/legacy/`](https://yassinelakchouch.github.io/To_Do_List/legacy/).
+A 2021 to-do list, rebuilt in the open: Linear's calm rows, and a career you grow by finishing what you planned. Every piece was released as it landed.
 
-**Live:** [yassinelakchouch.github.io/To_Do_List](https://yassinelakchouch.github.io/To_Do_List/)
+**Live:** [yassinelakchouch.github.io/To_Do_List](https://yassinelakchouch.github.io/To_Do_List/) · **First version (2021):** [`/legacy/`](https://yassinelakchouch.github.io/To_Do_List/legacy/)
 
-Designed on boards T-01 to T-07 (study, storyboard, hi-fi, play from Synergy, components, site map and flows, the loader and onboarding). The plan and its tasks are in [`docs/PLAN.md`](docs/PLAN.md).
+![Today: three tasks typed and sized with Tab, two ticked; each tick sends its sparks to the counter, the second pays a ×2 chain, and the week's bar fills](docs/media/demo.gif)
 
 ## The pages
 
@@ -39,7 +39,7 @@ A first visit asks your name, shows how it works, tours the five pages and offer
 
 ## Motion and sound
 
-GSAP and Web Audio, after board T-05:
+GSAP and Web Audio:
 - **Tick:** the gain flies to the spark pill as the counts roll, with a bright tick.
 - **Chain:** ×2 slides out and fades after 90 quiet seconds.
 - **Quest tier:** the next fifth of the emblem draws clockwise.
@@ -49,13 +49,32 @@ GSAP and Web Audio, after board T-05:
 
 The Motion and Sound switches turn each off; a reduced-motion system gets the still version.
 
+## How it was built
+
+1. **Measured the 2021 version first.** It was jQuery with 41 px rows and a 17 px delete target, saved nothing, and its page was 600 px wide on a 390 px phone, so delete sat off screen.
+2. **Designed on boards T-01 to T-07:** study, storyboard, screens, the play (after Synergy), components, the site map with one flow per use case, then the loader and onboarding. The plan and its tasks are in [`docs/PLAN.md`](docs/PLAN.md).
+3. **Released piece by piece.** 74 pull requests are merged, from the tasks reducer to the five pages; each merge to `main` redeploys the site.
+
+## What I learned
+
+- **Derive, don't count.** Points are worked out from the list every time, so unticking and Undo give back exactly what they took. A running total would drift the first time an undo and a chain overlap.
+- **A redraw can eat a double click.** The first click re-renders the row, so Chrome never sends `dblclick`; edit-in-place reads `click.detail === 2` instead.
+- **This size needs no framework.** String components, one store with an undo history and event delegation carry five pages, with 189 unit tests on the rules.
+
+## What's next
+
+Open on the T-07 board:
+- [#70](https://github.com/yassinelakchouch/To_Do_List/issues/70) Greet you by name in the header.
+- [#71](https://github.com/yassinelakchouch/To_Do_List/issues/71) Small gaps: replay from the keys sheet, 12 px text, the name note.
+- [#72](https://github.com/yassinelakchouch/To_Do_List/issues/72) Draw the "Your pages" step.
+
 ## Run
 
 ```sh
 npm ci
 npm run dev        # http://localhost:5182
-npm test           # unit tests (189)
-npm run test:e2e   # 57 flows, every use case on board T-06, on desktop and phone (keyboard-only ones skip the phone), in the installed Chrome
+npm test           # 189 unit tests
+npm run test:e2e   # 120 end-to-end tests: every use case on board T-06, on desktop and phone (keyboard-only ones skip the phone), in the installed Chrome
 npm run build
 ```
 
