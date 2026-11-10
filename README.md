@@ -52,7 +52,7 @@ The Motion and Sound switches turn each off; a reduced-motion system gets the st
 ## How it was built
 
 1. **Measured the 2021 version first.** It was jQuery with 41 px rows and a 17 px delete target, saved nothing, and its page was 600 px wide on a 390 px phone, so delete sat off screen.
-2. **Designed on boards T-01 to T-07:** study, storyboard, screens, the play (after Synergy), components, the site map with one flow per use case, then the loader and onboarding. The plan and its tasks are in [`docs/PLAN.md`](docs/PLAN.md).
+2. **Designed before it was built:** the study, the storyboard, the screens, the play (after Synergy), the components, the site map with one flow per use case, then the loader and onboarding. The plan and its tasks are in [`docs/PLAN.md`](docs/PLAN.md).
 3. **Released piece by piece.** 74 pull requests are merged, from the tasks reducer to the five pages; each merge to `main` redeploys the site.
 
 ## What I learned
@@ -63,7 +63,7 @@ The Motion and Sound switches turn each off; a reduced-motion system gets the st
 
 ## What's next
 
-Open on the T-07 board:
+Still open:
 - [#70](https://github.com/yassinelakchouch/To_Do_List/issues/70) Greet you by name in the header.
 - [#71](https://github.com/yassinelakchouch/To_Do_List/issues/71) Small gaps: replay from the keys sheet, 12 px text, the name note.
 - [#72](https://github.com/yassinelakchouch/To_Do_List/issues/72) Draw the "Your pages" step.
@@ -74,7 +74,7 @@ Open on the T-07 board:
 npm ci
 npm run dev        # http://localhost:5182
 npm test           # 189 unit tests
-npm run test:e2e   # 120 end-to-end tests: every use case on board T-06, on desktop and phone (keyboard-only ones skip the phone), in the installed Chrome
+npm run test:e2e   # 120 end-to-end tests: every use case of the site map, on desktop and phone (keyboard-only ones skip the phone), in the installed Chrome
 npm run build
 ```
 
